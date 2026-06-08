@@ -1,0 +1,6 @@
+node_modules/
+.env
+dist/
+output/
+assets/icon.ico
+tray_*
