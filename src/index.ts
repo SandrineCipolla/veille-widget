@@ -14,6 +14,7 @@ import { pushToWiki } from './github-wiki.js';
 import { notifySuccess, notifyError } from './notifier.js';
 import { getWeekLabel, saveOutput } from './output.js';
 import { uploadToDrive } from './drive-client.js';
+import { extractIncontournables, formatDiscordMessage, postToDiscord } from './discord-client.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ICON_PATH = path.resolve(__dirname, '..', 'assets', 'icon.ico');
@@ -74,6 +75,20 @@ async function runVeille(): Promise<void> {
       console.log('[Veille] Upload Google Drive…');
       const driveUrl = await uploadToDrive(config.google, filename, markdown);
       console.log(`[Veille] Drive → ${driveUrl}`);
+    }
+
+    if (config.discordWebhookUrl) {
+      try {
+        const incontournables = extractIncontournables(markdown);
+        if (incontournables) {
+          const message = formatDiscordMessage(incontournables, label, config.githubUsername, config.githubRepo);
+          await postToDiscord(config.discordWebhookUrl, message);
+          console.log('[Veille] Discord → message envoyé');
+        }
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        console.error('[Veille] Discord (non bloquant) :', error.message);
+      }
     }
 
     console.log('[Veille] Terminé !');
