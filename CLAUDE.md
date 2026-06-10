@@ -55,7 +55,8 @@ veille-widget/
 │   ├── config.ts             # chargement et validation des variables d'env
 │   ├── tavily-client.ts      # recherche web multi-topics via Tavily
 │   ├── openrouter-client.ts  # rédaction structurée via OpenRouter (mistral-7b)
-│   ├── github-wiki.ts        # push vers le wiki GitHub
+│   ├── github-wiki.ts        # push vers le wiki GitHub via simple-git
+│   ├── drive-client.ts       # upload optionnel vers Google Drive
 │   ├── notifier.ts           # notification Windows native
 │   ├── retry.ts              # utilitaire retry avec backoff exponentiel
 │   └── types.ts              # interfaces et types partagés
@@ -67,10 +68,10 @@ veille-widget/
 ## Dépendances autorisées
 - `systray2` — icône systray Windows (fork maintenu de node-systray)
 - `node-notifier` — notifications Windows natives
-- `@octokit/rest` — API GitHub
-- `@tavily/core` — recherche web (remplace Perplexity)
+- `@tavily/core` — recherche web
 - `openai` — client OpenRouter compatible (modèle configurable via OPENROUTER_MODEL)
-- `simple-git` — push vers le wiki GitHub (le Git Data API ne supporte pas les repos wiki)
+- `simple-git` — push vers le wiki GitHub (le Git Data API GitHub ne supporte pas les repos wiki)
+- `googleapis` — upload Google Drive optionnel (OAuth2, configuré via scripts/auth-google.ts)
 - `zod` — validation des schémas
 - `dotenv` — chargement .env
 - `tsx` — exécution TypeScript sans build

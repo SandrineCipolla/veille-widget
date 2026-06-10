@@ -13,6 +13,7 @@ import { generateVeilleMarkdown } from './openrouter-client.js';
 import { pushToWiki } from './github-wiki.js';
 import { notifySuccess, notifyError } from './notifier.js';
 import { getWeekLabel, saveOutput } from './output.js';
+import { uploadToDrive } from './drive-client.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ICON_PATH = path.resolve(__dirname, '..', 'assets', 'icon.ico');
@@ -68,8 +69,15 @@ async function runVeille(): Promise<void> {
 
     console.log('[Veille] Publication sur le wiki GitHub…');
     const { commitSha } = await pushToWiki(config.githubToken, config.githubUsername, config.githubRepo, label, markdown);
+    console.log(`[Veille] Wiki — commit ${commitSha.slice(0, 7)}`);
 
-    console.log(`[Veille] Terminé — commit ${commitSha.slice(0, 7)}`);
+    if (config.google) {
+      console.log('[Veille] Upload Google Drive…');
+      const driveUrl = await uploadToDrive(config.google, filename, markdown);
+      console.log(`[Veille] Drive → ${driveUrl}`);
+    }
+
+    console.log('[Veille] Terminé !');
     notifySuccess(filename);
   } catch (err) {
     const error = err instanceof Error ? err : new Error(String(err));
