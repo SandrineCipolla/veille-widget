@@ -62,8 +62,7 @@ async function runVeille(): Promise<void> {
 
     const label = getWeekLabel();
     const date = new Date().toLocaleDateString('fr-FR', { dateStyle: 'long' });
-    const markdown = `# Veille Techno ${label}\n\n_Généré le ${date}_\n\n${body}`;
-
+    const markdown = `_Généré le ${date}_\n\n${body}`;
     console.log('[Veille] Sauvegarde locale…');
     const filename = saveMarkdown(markdown);
 
