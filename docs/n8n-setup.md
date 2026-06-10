@@ -78,11 +78,11 @@ return [{ json: { articles } }];
 
 ```json
 {
-  "model": "mistralai/mistral-7b-instruct",
+  "model": "google/gemma-3-4b-it:free",
   "messages": [
     {
       "role": "system",
-      "content": "Tu es un assistant de curation pour un développeur fullstack TypeScript/Node.js.\nSélectionne les 3 articles les plus pertinents parmi la liste fournie.\nRéponds UNIQUEMENT en JSON valide, sans markdown, sans texte autour :\n[{\"title\": \"...\", \"url\": \"...\", \"reason\": \"...\"}]"
+      "content": "Tu es un assistant pour un développeur fullstack TypeScript/Node.js.\nSélectionne les 3 articles les plus pertinents parmi la liste fournie.\nRéponds UNIQUEMENT en JSON valide, sans markdown, sans texte autour :\n[{\"title\": \"...\", \"url\": \"...\", \"reason\": \"...\"}]"
     },
     {
       "role": "user",
