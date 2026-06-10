@@ -1,0 +1,210 @@
+{
+  "name": "Veille prompt-inspiration",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 8
+            },
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -336,
+        -48
+      ],
+      "id": "22c11429-0f85-4758-a8d7-6551e366a969",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();   \n  const articles = items.map((item, i) => {\n    const { title, link, contentSnippet } = item.json;\n    return `${i + 1}. Titre: ${title} | URL: ${link} | Résumé: ${contentSnippet ?? ''}`;\n  }).join(' // ');\n  \n  const chatInput = `Voici les articles RSS disponibles : ${articles}`;\n\n  return [{ json: { articles, chatInput } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        16,
+        -48
+      ],
+      "id": "5d29ac96-b04d-4d3c-bb7d-88972c0410c3",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=Tu es un assistant de curation pour un développeur fullstack TypeScript/Node.js.\n  Sélectionne les 3 articles les plus pertinents parmi la liste fournie. Réponds\n  UNIQUEMENT avec un tableau JSON valide contenant exactement 3 objets avec les\n  champs \"title\" (string), \"url\" (string) et \"reason\" (string). Aucun texte avant\n  ou après."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        192,
+        -48
+      ],
+      "id": "9b9234ae-660a-4d67-9326-df82ab4e3c7c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "openrouter/free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        96,
+        160
+      ],
+      "id": "238ea57f-b2f5-4cbe-822b-6ca995d349c3",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "WkibV2Bb4Cu5ZPg9",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": " const raw = ($input.first().json.output ?? '')\n    .replace(/```json/g, '')\n    .replace(/```/g, '')\n    .replace(/\\\\\"/g, '\"')\n    .replace(/\\\\n/g, '')\n    .match(/\\[[\\s\\S]*\\]/)?.[0] ?? '[]';\n\n  const selected = JSON.parse(raw);\n\n  \n  const today = new Date();\n  const weekLabel = today.toLocaleDateString('fr-FR', { day: '2-digit', month:\n  'long', year: 'numeric' });\n\n  const cards = selected.map(article => `\n    <div style=\"background:#f8fafc;border-left:4px solid #2563eb;padding:16px\n  20px;margin-bottom:16px;border-radius:4px;\">\n      <a href=\"${article.url}\" style=\"color:#2563eb;font-size:16px;font-weight:600;\n  text-decoration:none;\">${article.title}</a>\n      <p style=\"color:#64748b;font-style:italic;margin:8px 0\n  0;\">${article.reason}</p>\n    </div>\n  `).join('');\n\n  const html = `<!DOCTYPE html>\n  <html lang=\"fr\">\n  <head><meta charset=\"UTF-8\"></head>\n  <body style=\"margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,Blin\n  kMacSystemFont,'Segoe UI',sans-serif;\">\n    <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"\n  style=\"background:#f1f5f9;padding:32px 0;\">\n      <tr><td align=\"center\">\n        <table width=\"600\" cellpadding=\"0\" cellspacing=\"0\"\n  style=\"background:#ffffff;border-radius:8px;overflow:hidden;\">\n          <tr><td style=\"background:#2563eb;padding:24px 32px;\">\n            <h1\n  style=\"color:#ffffff;margin:0;font-size:20px;font-weight:700;\">Veille prompt-inspiration —\n  semaine du ${weekLabel}</h1>\n          </td></tr>\n          <tr><td style=\"padding:32px;\">${cards}</td></tr>\n          <tr><td style=\"background:#f8fafc;padding:16px\n  32px;text-align:center;color:#94a3b8;font-size:12px;\">\n            Généré automatiquement par veille-widget\n          </td></tr>\n        </table>\n      </td></tr>\n    </table>\n  </body>\n  </html>`;\n\n  return [{ json: { html, weekLabel } }];\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        -48
+      ],
+      "id": "25e66430-a065-4453-8c60-b07ad58c8985",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "sendTo": "sandrine.cipolla@gmail.com",
+        "subject": "=Veille prompt-inspiration — semaine du {{ $json.weekLabel }}",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        736,
+        -48
+      ],
+      "id": "201f5e28-009e-4a08-b8bb-11c31c558ab5",
+      "name": "Send a message",
+      "webhookId": "56b14cd7-951d-443c-b8ec-9a49e65ff902",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gK5FsuqfvKgSIQ8R",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://prompt-inspiration.com/rss.xml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -176,
+        -48
+      ],
+      "id": "b0f86139-2e57-45b3-87a5-9e76bbef416e",
+      "name": "RSS Read"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "308f4171-bc66-4d60-a3af-19e89be591f7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a9f6d3cf500d3296dad7b0695656b66347574cfccee84a5e82d55ba49c4c6969"
+  },
+  "nodeGroups": [],
+  "id": "2WfgJswKwqQswiOy",
+  "tags": []
+}
