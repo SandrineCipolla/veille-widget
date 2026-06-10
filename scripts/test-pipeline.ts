@@ -24,7 +24,7 @@ const prompt = fs.readFileSync(promptPath, 'utf-8').trim();
 console.log(`✓ Prompt chargé (${prompt.length} caractères)`);
 
 // ── 2. Tavily ──────────────────────────────────────────────────────────────
-console.log('\n[1/3] Recherche Tavily (5 topics × 3 résultats)…');
+console.log('\n[1/3] Recherche Tavily (9 topics × 3 résultats)…');
 const t0 = Date.now();
 const searchResults = await searchVeilleTopics(config.tavilyApiKey);
 console.log(`✓ Tavily : ${searchResults.length} caractères en ${Date.now() - t0} ms`);
@@ -39,7 +39,7 @@ console.log(`✓ OpenRouter : ${body.length} caractères en ${Date.now() - t1} m
 
 const label = getWeekLabel();
 const date = new Date().toLocaleDateString('fr-FR', { dateStyle: 'long' });
-const markdown = `# Veille Techno ${label}\n\n_Généré le ${date}_\n\n${body}`;
+const markdown = `_Généré le ${date}_\n\n${body}`;
 
 // ── 4. Sauvegarde locale ───────────────────────────────────────────────────
 const filepath = saveOutput(markdown);

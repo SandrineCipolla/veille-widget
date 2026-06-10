@@ -4,14 +4,46 @@ import { withRetry } from './retry.js';
 
 const MAX_RESULTS_PER_TOPIC = 3;
 const DAYS = 7;
+const CURRENT_YEAR = new Date().getFullYear();
 
 /** Requêtes de recherche couvrant chaque section du prompt de veille */
 const SEARCH_TOPICS: ReadonlyArray<{ label: string; query: string }> = [
-  { label: 'Stack technique', query: 'TypeScript React Vite Node.js Tailwind actualités semaine' },
-  { label: 'Architecture', query: 'architecture logicielle DDD microservices BFF hexagonale patterns semaine' },
-  { label: 'Sécurité', query: 'sécurité web OWASP CVE vulnérabilité Node.js React RGPD ANSSI semaine' },
-  { label: 'DevOps & CI/CD', query: 'DevOps CI/CD GitHub Actions Docker déploiement continu semaine' },
-  { label: 'Numérique responsable', query: 'numérique responsable green IT éco-conception web accessibilité WCAG semaine' },
+  {
+    label: 'Stack TS/React/Node.js',
+    query: `TypeScript React 19 Vite Node.js release changelog ${CURRENT_YEAR}`,
+  },
+  {
+    label: 'Architecture logicielle',
+    query: `software architecture patterns microservices monolith news ${CURRENT_YEAR}`,
+  },
+  {
+    label: 'IA & LLM en production',
+    query: `LLM production Gemma Mistral OpenRouter Claude AI agent patterns ${CURRENT_YEAR}`,
+  },
+  {
+    label: 'Sécurité applicative',
+    query: `OWASP CVE Node.js npm security vulnerability advisory ${CURRENT_YEAR}`,
+  },
+  {
+    label: 'Réglementation numérique',
+    query: `EU AI Act RGPD ANSSI Cyber Resilience Act conformité ${CURRENT_YEAR}`,
+  },
+  {
+    label: 'DevOps & CI/CD',
+    query: `GitHub Actions CI/CD Docker déploiement continu release ${CURRENT_YEAR}`,
+  },
+  {
+    label: 'Numérique responsable',
+    query: `green software sustainability web performance carbon ${CURRENT_YEAR}`,
+  },
+  {
+    label: 'Accessibilité',
+    query: `WCAG 2.2 RGAA accessibilité web a11y ${CURRENT_YEAR}`,
+  },
+  {
+    label: 'Outils dev & pratiques',
+    query: `Claude Code developer tools TypeScript ESLint Vitest pratiques développement ${CURRENT_YEAR}`,
+  },
 ];
 
 const SearchResultSchema = z.object({
