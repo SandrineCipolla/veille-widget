@@ -15,6 +15,8 @@ const ConfigSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   GOOGLE_REFRESH_TOKEN: z.string().optional(),
   GOOGLE_DRIVE_FOLDER_ID: z.string().optional(),
+  // Discord — optionnel, envoi désactivé si absent
+  DISCORD_WEBHOOK_URL: z.string().url().optional(),
 });
 
 const result = ConfigSchema.safeParse(process.env);
@@ -44,4 +46,5 @@ export const config = {
   githubUsername: data.GITHUB_USERNAME,
   githubRepo: data.GITHUB_REPO,
   google: googleConfig,
+  discordWebhookUrl: data.DISCORD_WEBHOOK_URL,
 } as const;

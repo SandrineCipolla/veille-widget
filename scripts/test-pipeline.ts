@@ -1,12 +1,13 @@
 /**
  * Test du pipeline complet sans la systray.
- * Lance : npx tsx scripts/test-pipeline.ts [--skip-github] [--skip-drive]
+ * Lance : npx tsx scripts/test-pipeline.ts [--skip-github] [--skip-drive] [--skip-discord]
  */
 import { config } from '../src/config.js';
 import { searchVeilleTopics } from '../src/tavily-client.js';
 import { generateVeilleMarkdown } from '../src/openrouter-client.js';
 import { pushToWiki } from '../src/github-wiki.js';
 import { uploadToDrive } from '../src/drive-client.js';
+import { extractIncontournables, formatDiscordMessage, postToDiscord } from '../src/discord-client.js';
 import { saveOutput, getWeekLabel } from '../src/output.js';
 import fs from 'fs';
 import path from 'path';
@@ -15,6 +16,7 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SKIP_GITHUB = process.argv.includes('--skip-github');
 const SKIP_DRIVE = process.argv.includes('--skip-drive');
+const SKIP_DISCORD = process.argv.includes('--skip-discord');
 
 console.log('=== Test pipeline veille ===\n');
 
@@ -66,6 +68,22 @@ if (SKIP_DRIVE || !config.google) {
   const filename = path.basename(filepath);
   const driveUrl = await uploadToDrive(config.google, filename, markdown);
   console.log(`✓ Drive → ${driveUrl} (${Date.now() - t3} ms)`);
+}
+
+// ── 7. Discord ─────────────────────────────────────────────────────────────
+if (SKIP_DISCORD || !config.discordWebhookUrl) {
+  console.log(`[Discord] Ignoré (${SKIP_DISCORD ? '--skip-discord' : 'DISCORD_WEBHOOK_URL absente'})\n`);
+} else {
+  console.log('\n[Discord] Envoi webhook Discord…');
+  const t4 = Date.now();
+  const incontournables = extractIncontournables(markdown);
+  if (!incontournables) {
+    console.log('[Discord] Section "🔥 Incontournables" introuvable — envoi ignoré');
+  } else {
+    const message = formatDiscordMessage(incontournables, label, config.githubUsername, config.githubRepo);
+    await postToDiscord(config.discordWebhookUrl, message);
+    console.log(`✓ Discord → message envoyé (${Date.now() - t4} ms)`);
+  }
 }
 
 console.log('\n=== Pipeline OK ===');
