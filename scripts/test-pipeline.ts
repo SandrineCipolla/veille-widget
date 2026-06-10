@@ -1,11 +1,12 @@
 /**
  * Test du pipeline complet sans la systray.
- * Lance : npx tsx scripts/test-pipeline.ts [--skip-github]
+ * Lance : npx tsx scripts/test-pipeline.ts [--skip-github] [--skip-drive]
  */
 import { config } from '../src/config.js';
 import { searchVeilleTopics } from '../src/tavily-client.js';
 import { generateVeilleMarkdown } from '../src/openrouter-client.js';
 import { pushToWiki } from '../src/github-wiki.js';
+import { uploadToDrive } from '../src/drive-client.js';
 import { saveOutput, getWeekLabel } from '../src/output.js';
 import fs from 'fs';
 import path from 'path';
@@ -13,6 +14,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SKIP_GITHUB = process.argv.includes('--skip-github');
+const SKIP_DRIVE = process.argv.includes('--skip-drive');
 
 console.log('=== Test pipeline veille ===\n');
 
@@ -53,6 +55,17 @@ if (SKIP_GITHUB) {
     config.githubToken, config.githubUsername, config.githubRepo, label, markdown,
   );
   console.log(`✓ Wiki mis à jour : ${filename} — commit ${commitSha.slice(0, 7)} (${Date.now() - t2} ms)`);
+}
+
+// ── 6. Google Drive ────────────────────────────────────────────────────────
+if (SKIP_DRIVE || !config.google) {
+  console.log(`[Drive] Ignoré (${SKIP_DRIVE ? '--skip-drive' : 'vars Google absentes'})\n`);
+} else {
+  console.log('\n[Drive] Upload Google Drive…');
+  const t3 = Date.now();
+  const filename = path.basename(filepath);
+  const driveUrl = await uploadToDrive(config.google, filename, markdown);
+  console.log(`✓ Drive → ${driveUrl} (${Date.now() - t3} ms)`);
 }
 
 console.log('\n=== Pipeline OK ===');
