@@ -17,6 +17,8 @@ const ConfigSchema = z.object({
   GOOGLE_DRIVE_FOLDER_ID: z.string().optional(),
   // Discord — optionnel, envoi désactivé si absent
   DISCORD_WEBHOOK_URL: z.string().url().optional(),
+  // Cron — optionnel, déclenchement automatique désactivé si absent
+  CRON_SCHEDULE: z.string().optional(),
 });
 
 const result = ConfigSchema.safeParse(process.env);
@@ -47,4 +49,5 @@ export const config = {
   githubRepo: data.GITHUB_REPO,
   google: googleConfig,
   discordWebhookUrl: data.DISCORD_WEBHOOK_URL,
+  cronSchedule: data.CRON_SCHEDULE,
 } as const;

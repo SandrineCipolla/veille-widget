@@ -15,6 +15,7 @@ import { notifySuccess, notifyError } from './notifier.js';
 import { getWeekLabel, saveOutput } from './output.js';
 import { uploadToDrive } from './drive-client.js';
 import { extractIncontournables, formatDiscordMessage, postToDiscord } from './discord-client.js';
+import { startCronJob } from './cron.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ICON_PATH = path.resolve(__dirname, '..', 'assets', 'icon.ico');
@@ -47,6 +48,9 @@ systray.onClick((action) => {
 });
 
 console.log('[Veille] Widget démarré — icône dans la barre des tâches.');
+
+const cronJob = startCronJob(config.cronSchedule, () => void runVeille());
+if (cronJob) console.log('[Veille] Cron actif —', config.cronSchedule);
 
 async function runVeille(): Promise<void> {
   if (!runGuard.acquire()) {
