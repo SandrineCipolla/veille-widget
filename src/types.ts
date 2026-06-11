@@ -6,3 +6,13 @@ export interface WikiPushResult {
   commitSha: string;
   filename: string;
 }
+
+/** Entrée de log d'un run de pipeline */
+export interface RunLogEntry {
+  date: string;
+  durationMs: number;
+  model: string;
+  wikiPage: string;
+  success: boolean;
+  error?: string;
+}

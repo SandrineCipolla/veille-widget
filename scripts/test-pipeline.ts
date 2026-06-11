@@ -9,6 +9,7 @@ import { pushToWiki } from '../src/github-wiki.js';
 import { uploadToDrive } from '../src/drive-client.js';
 import { extractIncontournables, formatDiscordMessage, postToDiscord } from '../src/discord-client.js';
 import { saveOutput, getWeekLabel } from '../src/output.js';
+import { appendRunLog } from '../src/run-logger.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -85,5 +86,15 @@ if (SKIP_DISCORD || !config.discordWebhookUrl) {
     console.log(`✓ Discord → message envoyé (${Date.now() - t4} ms)`);
   }
 }
+
+// ── 8. Log ─────────────────────────────────────────────────────────────────
+appendRunLog({
+  date: new Date().toISOString(),
+  durationMs: Date.now() - t0,
+  model: config.openrouterModel,
+  wikiPage: label,
+  success: true,
+});
+console.log('✓ Run loggé dans logs/pipeline.json');
 
 console.log('\n=== Pipeline OK ===');

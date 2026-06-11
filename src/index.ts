@@ -16,6 +16,7 @@ import { getWeekLabel, saveOutput } from './output.js';
 import { uploadToDrive } from './drive-client.js';
 import { extractIncontournables, formatDiscordMessage, postToDiscord } from './discord-client.js';
 import { startCronJob } from './cron.js';
+import { appendRunLog } from './run-logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ICON_PATH = path.resolve(__dirname, '..', 'assets', 'icon.ico');
@@ -58,6 +59,9 @@ async function runVeille(): Promise<void> {
     return;
   }
 
+  const startedAt = Date.now();
+  const label = getWeekLabel();
+
   try {
     const prompt = loadPrompt();
     console.log('[Veille] Recherche web Tavily…');
@@ -65,7 +69,6 @@ async function runVeille(): Promise<void> {
     console.log(`[Veille] Rédaction OpenRouter (${config.openrouterModel})…`);
     const body = await generateVeilleMarkdown(config.openrouterApiKey, config.openrouterModel, prompt, searchResults);
 
-    const label = getWeekLabel();
     const date = new Date().toLocaleDateString('fr-FR', { dateStyle: 'long' });
     const markdown = `_Généré le ${date}_\n\n${body}`;
     console.log('[Veille] Sauvegarde locale…');
@@ -95,10 +98,12 @@ async function runVeille(): Promise<void> {
       }
     }
 
+    appendRunLog({ date: new Date().toISOString(), durationMs: Date.now() - startedAt, model: config.openrouterModel, wikiPage: label, success: true });
     console.log('[Veille] Terminé !');
     notifySuccess(filename);
   } catch (err) {
     const error = err instanceof Error ? err : new Error(String(err));
+    appendRunLog({ date: new Date().toISOString(), durationMs: Date.now() - startedAt, model: config.openrouterModel, wikiPage: label, success: false, error: error.message });
     console.error('[Veille] Erreur :', error.message);
     notifyError(error);
   } finally {
