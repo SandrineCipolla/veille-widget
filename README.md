@@ -75,7 +75,7 @@ Développé dans le cadre du RNCP 7 "Expert en Architecture et Développement Lo
 - Un compte [Tavily](https://tavily.com) (clé API gratuite)
 - Un compte [OpenRouter](https://openrouter.ai) (clé API gratuite)
 - Un token GitHub classic avec scope `repo`
-- Un repo GitHub avec le wiki activé (créer une première page manuellement)
+- Un repo GitHub **dédié au contenu** avec le wiki activé (créer une première page manuellement) — ce repo est séparé du repo du widget
 
 ---
 
@@ -99,7 +99,7 @@ OPENROUTER_API_KEY=sk-or-...
 OPENROUTER_MODEL=google/gemma-4-31b-it:free
 GITHUB_TOKEN=ghp_...          # classic PAT, scope repo
 GITHUB_USERNAME=MonPseudo
-GITHUB_REPO=mon-repo-wiki     # le wiki de ce repo sera utilisé
+GITHUB_REPO=mon-repo-contenu  # repo dédié au contenu — son wiki recevra les digests
 
 # Optionnels
 GOOGLE_CLIENT_ID=             # voir scripts/auth-google.ts
@@ -170,7 +170,7 @@ workflows/
 | Destination | Format | Exemple |
 |------------|--------|---------|
 | Local | `output/YYYY-Www.md` | `output/2026-W24.md` |
-| GitHub Wiki | Page par semaine | [Wiki →](https://github.com/SandrineCipolla/sandrine-veille-techno/wiki) |
+| GitHub Wiki | Page par semaine dans un repo dédié | [sandrine-veille-techno/wiki →](https://github.com/SandrineCipolla/sandrine-veille-techno/wiki) |
 | Google Drive | Fichier `.md` dans un dossier | optionnel |
 | Discord | Message avec les 🔥 Incontournables | optionnel |
 
@@ -178,6 +178,10 @@ workflows/
 
 ## Lien RNCP 7
 
-Ce projet constitue la preuve de la compétence **C1.2** (veille technologique, Bloc 1).  
-Le digest hebdomadaire archivé dans le wiki GitHub forme une trace documentée, datée et exploitable directement dans le mémoire et lors des soutenances.  
-Les 9 topics couvrent les 4 blocs de compétences Ingétis.
+Ce projet constitue la preuve de la compétence **C1.2** (veille technologique, Bloc 1).
+
+Deux repos distincts :
+- **`veille-widget`** (ce repo) — le code du widget et de la pipeline
+- **`sandrine-veille-techno`** — le contenu de la veille, archivé dans son wiki
+
+Le digest hebdomadaire archivé dans le wiki forme une trace documentée, datée et exploitable directement dans le mémoire et lors des soutenances. Les 9 topics couvrent les 4 blocs de compétences Ingétis.
