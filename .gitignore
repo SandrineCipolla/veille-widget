@@ -5,3 +5,5 @@ output/
 assets/icon.ico
 tray_*
 .idea/
+logs/*
+!logs/pipeline.json
