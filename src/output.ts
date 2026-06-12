@@ -20,3 +20,14 @@ export function saveOutput(content: string, outputDir = './output'): string {
   fs.writeFileSync(filepath, content, 'utf-8');
   return filepath;
 }
+
+/**
+ * Écrase outputDir/latest.md avec le digest courant.
+ * Préfixe le label ISO en commentaire HTML pour que le widget Electron puisse le lire
+ * sans dépendre du format du titre généré par le modèle.
+ */
+export function saveLatestDigest(content: string, weekLabel: string, outputDir = './output'): void {
+  const dir = path.resolve(outputDir);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'latest.md'), `<!-- week: ${weekLabel} -->\n${content}`, 'utf-8');
+}
