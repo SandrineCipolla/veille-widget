@@ -58,6 +58,7 @@
       border-radius: 10px;
     }
 
+    .titlebar .collapse-btn,
     .titlebar .close-btn {
       -webkit-app-region: no-drag;
       background: none;
@@ -70,7 +71,8 @@
       line-height: 1;
       transition: background 0.15s, color 0.15s;
     }
-    .titlebar .close-btn:hover { background: rgba(243,139,168,0.15); color: var(--error); }
+    .titlebar .collapse-btn:hover { background: rgba(166,227,161,0.15); color: var(--success); }
+    .titlebar .close-btn:hover    { background: rgba(243,139,168,0.15); color: var(--error); }
 
     /* ── Zone de contenu ── */
     .content {
@@ -117,6 +119,21 @@
     .article-title { font-weight: 600; }
     .article-desc  { color: var(--subtext); margin-top: 1px; }
 
+    .wiki-link {
+      margin-top: 10px;
+      background: none;
+      border: 1px solid rgba(245,166,35,0.3);
+      border-radius: 6px;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 10px;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.15s;
+    }
+    .wiki-link:hover { background: rgba(245,166,35,0.08); }
+
     /* ── Pied de page ── */
     .footer {
       padding: 10px 12px;
@@ -161,7 +178,8 @@
     <span>🔍</span>
     <span class="title">Veille Techno</span>
     <span class="week" id="weekLabel">—</span>
-    <button class="close-btn" id="closeBtn" title="Réduire">✕</button>
+    <button class="collapse-btn" id="collapseBtn" title="Réduire">−</button>
+    <button class="close-btn" id="closeBtn" title="Masquer dans le systray">✕</button>
   </div>
 
   <div class="content" id="content">
@@ -172,6 +190,7 @@
     <div id="articlesList" style="display:none">
       <div class="section-label">🔥 Incontournables</div>
       <ul class="articles" id="articles"></ul>
+      <button class="wiki-link" id="wikiLink" style="display:none">↗ Voir le digest complet</button>
     </div>
   </div>
 
@@ -181,13 +200,17 @@
   </div>
 
   <script>
-    const weekLabelEl  = document.getElementById('weekLabel');
-    const emptyStateEl = document.getElementById('emptyState');
+    const weekLabelEl    = document.getElementById('weekLabel');
+    const emptyStateEl   = document.getElementById('emptyState');
     const articlesListEl = document.getElementById('articlesList');
-    const articlesEl   = document.getElementById('articles');
-    const runBtnEl     = document.getElementById('runBtn');
-    const statusEl     = document.getElementById('status');
-    const closeBtnEl   = document.getElementById('closeBtn');
+    const articlesEl     = document.getElementById('articles');
+    const wikiLinkEl     = document.getElementById('wikiLink');
+    const runBtnEl       = document.getElementById('runBtn');
+    const statusEl       = document.getElementById('status');
+    const closeBtnEl     = document.getElementById('closeBtn');
+    const collapseBtnEl  = document.getElementById('collapseBtn');
+
+    let currentWikiUrl = null;
 
     function esc(str) {
       return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -195,16 +218,22 @@
 
     function parseBullets(markdown) {
       return markdown.split('\n')
-        .filter(l => l.trim().startsWith('-'))
+        .map(l => l.trim())
+        .filter(l => l.startsWith('**') || l.startsWith('- **') || l.startsWith('- '))
         .map(l => {
-          const clean = l.replace(/^[\s\-]+/, '').trim();
+          const clean = l.replace(/^-\s*/, '');
           const m = clean.match(/^\*\*(.+?)\*\*\s*[—–\-]\s*(.+)$/);
-          return m ? { title: m[1], desc: m[2] } : { title: clean, desc: '' };
+          if (m) return { title: m[1], desc: m[2].slice(0, 120) + (m[2].length > 120 ? '…' : '') };
+          const titleOnly = clean.match(/^\*\*(.+?)\*\*/);
+          if (titleOnly) return { title: titleOnly[1], desc: '' };
+          return { title: clean.replace(/\*\*/g, ''), desc: '' };
         })
-        .filter(a => a.title);
+        .filter(a => a.title && !a.title.startsWith('#'));
     }
 
-    window.veille.onContent(({ incontournables, weekLabel }) => {
+    window.veille.onContent(({ incontournables, weekLabel, wikiUrl }) => {
+      currentWikiUrl = wikiUrl || null;
+
       if (!incontournables) {
         emptyStateEl.style.display = 'block';
         articlesListEl.style.display = 'none';
@@ -222,6 +251,7 @@
         </li>
       `).join('');
 
+      wikiLinkEl.style.display = wikiUrl ? 'block' : 'none';
       emptyStateEl.style.display = 'none';
       articlesListEl.style.display = 'block';
     });
@@ -249,8 +279,26 @@
 
     runBtnEl.addEventListener('click', () => window.veille.runPipeline());
     closeBtnEl.addEventListener('click', () => window.veille.closeWindow());
+    collapseBtnEl.addEventListener('click', () => window.veille.toggleCollapse());
+    wikiLinkEl.addEventListener('click', () => { if (currentWikiUrl) window.veille.openUrl(currentWikiUrl); });
+
+    window.veille.onCollapsed((collapsed) => {
+      collapseBtnEl.textContent = collapsed ? '□' : '−';
+    });
 
     window.veille.getLatest();
+
+    // Rendu de l'emoji sur canvas → PNG → icône systray
+    (function sendEmojiIcon() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 32; canvas.height = 32;
+      const ctx = canvas.getContext('2d');
+      ctx.font = '24px "Segoe UI Emoji", serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🔥', 16, 18);
+      window.veille.setTrayIcon(canvas.toDataURL('image/png'));
+    })();
   </script>
 </body>
 </html>

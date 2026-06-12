@@ -36,7 +36,7 @@ export async function runVeille(): Promise<void> {
     console.log('[Veille] Sauvegarde locale…');
     const filepath = saveOutput(markdown, OUTPUT_DIR);
     const filename = path.basename(filepath);
-    saveLatestDigest(markdown, OUTPUT_DIR);
+    saveLatestDigest(markdown, label, OUTPUT_DIR);
 
     console.log('[Veille] Publication sur le wiki GitHub…');
     const { commitSha } = await pushToWiki(config.githubToken, config.githubUsername, config.githubRepo, label, markdown);
