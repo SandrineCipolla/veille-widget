@@ -20,3 +20,10 @@ export function saveOutput(content: string, outputDir = './output'): string {
   fs.writeFileSync(filepath, content, 'utf-8');
   return filepath;
 }
+
+/** Écrase outputDir/latest.md avec le digest courant — point d'entrée du widget Electron. */
+export function saveLatestDigest(content: string, outputDir = './output'): void {
+  const dir = path.resolve(outputDir);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'latest.md'), content, 'utf-8');
+}
