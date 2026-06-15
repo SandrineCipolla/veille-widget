@@ -34,8 +34,8 @@ FORMAT DE SORTIE (Markdown) :
 
 ## 💡 IA & LLM en production
 
-## 🌍 Source anglophone de la semaine
-[Résumé en français d'un article EN significatif, 6-8 lignes]
+## 🌍 Source de la semaine
+[Résumé en français d'un article FR ou EN particulièrement significatif ou peu relayé, 6-8 lignes]
 → Source originale : [URL]
 
 ## 🗓️ À surveiller la semaine prochaine
@@ -43,6 +43,7 @@ FORMAT DE SORTIE (Markdown) :
 échéances réglementaires RNCP. Pas de sujets tech généraux hors stack.]
 
 ---
-Chaque item hors "Source anglophone" suit ce format :
-**Titre [FR/EN]** — 3 à 5 phrases : contexte, ce qui change, impact concret ou lien RNCP explicite.
+Chaque item hors "Source de la semaine" suit ce format :
+**Titre [FR]** ou **Titre [EN]** selon la langue de la source — OBLIGATOIRE, ne jamais omettre le tag.
+Puis : 3 à 5 phrases : contexte, ce qui change, impact concret ou lien RNCP explicite.
 → [URL ou "lien à vérifier"]

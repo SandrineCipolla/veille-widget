@@ -3,46 +3,79 @@ import { z } from 'zod';
 import { withRetry } from './retry.js';
 
 const MAX_RESULTS_PER_TOPIC = 3;
-const DAYS = 7;
 const CURRENT_YEAR = new Date().getFullYear();
 
-/** Requêtes de recherche couvrant chaque section du prompt de veille */
-const SEARCH_TOPICS: ReadonlyArray<{ label: string; query: string }> = [
+interface SearchTopic {
+  label: string;
+  query: string;
+  days: number;
+  topic: 'news' | 'general';
+  includeDomains?: string[];
+}
+
+/**
+ * Topics internationaux : topic:'news', 7 jours, pas de restriction de domaine.
+ * Topics français : topic:'general', 14 jours + includeDomains sur les domaines
+ * officiels FR — seule approche qui garantit du contenu en français via Tavily.
+ */
+const SEARCH_TOPICS: ReadonlyArray<SearchTopic> = [
   {
     label: 'Stack TS/React/Node.js',
-    query: `TypeScript React 19 Vite Node.js release changelog ${CURRENT_YEAR}`,
+    query: `TypeScript "React framework" OR "Node.js" OR "Vite" release changelog developer ${CURRENT_YEAR}`,
+    days: 7,
+    topic: 'news',
   },
   {
-    label: 'Architecture logicielle',
-    query: `software architecture patterns microservices monolith news ${CURRENT_YEAR}`,
+    label: 'Architecture & patterns',
+    query: `software architecture microservices DDD event-driven patterns ${CURRENT_YEAR}`,
+    days: 7,
+    topic: 'news',
   },
   {
     label: 'IA & LLM en production',
-    query: `LLM production Gemma Mistral OpenRouter Claude AI agent patterns ${CURRENT_YEAR}`,
+    query: `LLM agent AI production Claude Gemini OpenAI developer ${CURRENT_YEAR}`,
+    days: 7,
+    topic: 'news',
   },
   {
-    label: 'Sécurité applicative',
-    query: `OWASP CVE Node.js npm security vulnerability advisory ${CURRENT_YEAR}`,
-  },
-  {
-    label: 'Réglementation numérique',
-    query: `EU AI Act RGPD ANSSI Cyber Resilience Act conformité ${CURRENT_YEAR}`,
+    label: 'Sécurité — CVE & advisories',
+    query: `CVE Node.js npm security vulnerability advisory ${CURRENT_YEAR}`,
+    days: 7,
+    topic: 'news',
   },
   {
     label: 'DevOps & CI/CD',
-    query: `GitHub Actions CI/CD Docker déploiement continu release ${CURRENT_YEAR}`,
+    query: `GitHub Actions Docker Kubernetes CI/CD deployment release ${CURRENT_YEAR}`,
+    days: 7,
+    topic: 'news',
   },
   {
-    label: 'Numérique responsable',
-    query: `green software sustainability web performance carbon ${CURRENT_YEAR}`,
+    label: 'CERT-FR & ANSSI [FR]',
+    query: 'bulletin alerte vulnérabilité sécurité informatique',
+    days: 14,
+    topic: 'general',
+    includeDomains: ['cert.ssi.gouv.fr', 'ssi.gouv.fr', 'cyber.gouv.fr'],
   },
   {
-    label: 'Accessibilité',
-    query: `WCAG 2.2 RGAA accessibilité web a11y ${CURRENT_YEAR}`,
+    label: 'CNIL & réglementation numérique [FR]',
+    query: 'protection données RGPD délibération réglementation numérique',
+    days: 14,
+    topic: 'general',
+    includeDomains: ['cnil.fr', 'legifrance.gouv.fr', 'economie.gouv.fr'],
   },
   {
-    label: 'Outils dev & pratiques',
-    query: `Claude Code developer tools TypeScript ESLint Vitest pratiques développement ${CURRENT_YEAR}`,
+    label: 'DINUM & numérique public [FR]',
+    query: 'numérique public État actualité service logiciel',
+    days: 14,
+    topic: 'general',
+    includeDomains: ['numerique.gouv.fr', 'data.gouv.fr', 'etalab.gouv.fr'],
+  },
+  {
+    label: 'Communauté dev FR',
+    query: 'TypeScript JavaScript développement web actualité',
+    days: 14,
+    topic: 'general',
+    includeDomains: ['developpez.com', 'humancoders.com', 'journalduhacker.net'],
   },
 ];
 
@@ -68,7 +101,13 @@ export async function searchVeilleTopics(apiKey: string): Promise<string> {
 
   const searches = SEARCH_TOPICS.map((topic) =>
     withRetry(
-      () => client.search(topic.query, { searchDepth: 'basic', topic: 'news', days: DAYS, maxResults: MAX_RESULTS_PER_TOPIC }),
+      () => client.search(topic.query, {
+        searchDepth: 'basic',
+        topic: topic.topic,
+        days: topic.days,
+        maxResults: MAX_RESULTS_PER_TOPIC,
+        ...(topic.includeDomains ? { includeDomains: topic.includeDomains } : {}),
+      }),
       isRetryable,
     ).then((res) => ({ label: topic.label, results: res.results })),
   );
