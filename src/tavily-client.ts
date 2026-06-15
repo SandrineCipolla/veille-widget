@@ -14,11 +14,13 @@ interface SearchTopic {
 }
 
 /**
- * Topics internationaux : topic:'news', 7 jours, pas de restriction de domaine.
- * Topics français : topic:'general', 14 jours + includeDomains sur les domaines
- * officiels FR — seule approche qui garantit du contenu en français via Tavily.
+ * Structure à deux niveaux :
+ * - Topics principaux (EN) : topic:'news', 7 jours — garantissent du contenu de qualité
+ * - Topics FR supplémentaires : topic:'general', 14 jours + includeDomains officiels FR
+ *   → viennent enrichir les mêmes sections ; OpenRouter choisit le meilleur indépendamment de la langue
  */
 const SEARCH_TOPICS: ReadonlyArray<SearchTopic> = [
+  // ── Topics internationaux ─────────────────────────────────────────────────
   {
     label: 'Stack TS/React/Node.js',
     query: `TypeScript "React framework" OR "Node.js" OR "Vite" release changelog developer ${CURRENT_YEAR}`,
@@ -50,29 +52,29 @@ const SEARCH_TOPICS: ReadonlyArray<SearchTopic> = [
     topic: 'news',
   },
   {
-    label: 'CERT-FR & ANSSI [FR]',
+    label: 'Numérique responsable & accessibilité',
+    query: `WCAG accessibility green software sustainability web performance ${CURRENT_YEAR}`,
+    days: 7,
+    topic: 'news',
+  },
+  // ── Topics FR supplémentaires (enrichissement, pas de remplacement) ───────
+  {
+    label: 'Sécurité — CERT-FR & ANSSI [FR]',
     query: 'bulletin alerte vulnérabilité sécurité informatique',
     days: 14,
     topic: 'general',
     includeDomains: ['cert.ssi.gouv.fr', 'ssi.gouv.fr', 'cyber.gouv.fr'],
   },
   {
-    label: 'CNIL & réglementation numérique [FR]',
-    query: 'protection données RGPD délibération réglementation numérique',
+    label: 'Réglementation & institutions numériques [FR]',
+    query: 'numérique public RGPD données réglementation actualité',
     days: 14,
     topic: 'general',
-    includeDomains: ['cnil.fr', 'legifrance.gouv.fr', 'economie.gouv.fr'],
+    includeDomains: ['cnil.fr', 'numerique.gouv.fr', 'data.gouv.fr', 'legifrance.gouv.fr'],
   },
   {
-    label: 'DINUM & numérique public [FR]',
-    query: 'numérique public État actualité service logiciel',
-    days: 14,
-    topic: 'general',
-    includeDomains: ['numerique.gouv.fr', 'data.gouv.fr', 'etalab.gouv.fr'],
-  },
-  {
-    label: 'Communauté dev FR',
-    query: 'TypeScript JavaScript développement web actualité',
+    label: 'Communauté dev francophone [FR]',
+    query: 'TypeScript JavaScript Node.js développement web actualité',
     days: 14,
     topic: 'general',
     includeDomains: ['developpez.com', 'humancoders.com', 'journalduhacker.net'],

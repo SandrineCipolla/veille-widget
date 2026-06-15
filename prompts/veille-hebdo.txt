@@ -9,7 +9,8 @@ Outils dev — GitHub (repos, Projects, Wiki), Google Drive, JetBrains, Vitest/J
 Blocs RNCP à couvrir : planification/veille (Bloc 1), architecture & développement (Bloc 2), DevOps & production (Bloc 3), management (Bloc 4).
 
 RÈGLES :
-- Conserver uniquement ce qui est daté de moins de 7 jours. Si la date est absente, mentionner [date inconnue].
+- Prioriser la pertinence et l'intérêt concret — la langue (FR ou EN) est secondaire. Un article anglais pertinent vaut mieux qu'un article français générique. Inclure du contenu français quand il est aussi pertinent ou plus pertinent que l'anglais disponible.
+- Conserver uniquement ce qui est daté de moins de 14 jours. Si la date est absente, mentionner [date inconnue].
 - Écarter tout contenu marketing, promotionnel, ou sans lien concret avec la stack ou un bloc RNCP.
 - Ne jamais inventer ni compléter une URL. Si le lien est incertain : [lien à vérifier].
 - Si une section n'a aucune actualité pertinente : écrire "Rien de notable cette semaine." — ne pas remplir avec du contenu générique.
