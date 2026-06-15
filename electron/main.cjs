@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const zlib = require('zlib');
 const { spawn } = require('child_process');
+const cron = require('node-cron');
 
 // ── Génération de l'icône PNG (cercle orange sur fond transparent) ──────────
 function crc32(buf) {
@@ -189,6 +190,12 @@ app.whenReady().then(() => {
   createWindow();
   createTray();
   win.webContents.once('did-finish-load', () => pushContent());
+
+  const cronSchedule = loadEnvValue('CRON_SCHEDULE');
+  if (cronSchedule && cron.validate(cronSchedule)) {
+    cron.schedule(cronSchedule, () => runPipeline());
+    console.log('[Widget] Cron actif —', cronSchedule);
+  }
 });
 
 ipcMain.on('get-latest', () => pushContent());
