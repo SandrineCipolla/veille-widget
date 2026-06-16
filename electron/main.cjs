@@ -52,7 +52,7 @@ function buildPngIcon(size = 32) {
 }
 
 const APP_ROOT = path.join(__dirname, '..');
-const OUTPUT_LATEST = path.join(APP_ROOT, 'output', 'latest.md');
+const OUTPUT_LATEST     = path.join(APP_ROOT, 'output', 'latest.md');
 const OUTPUT_TRANSLATED = path.join(APP_ROOT, 'output', 'latest-traduit.html');
 const ICON_PATH = path.join(APP_ROOT, 'assets', 'icon.ico');
 
@@ -103,7 +103,7 @@ function createTray() {
 
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Afficher / Masquer', click: () => toggleWindowVisibility() },
-    { label: 'Lancer la veille',   click: () => runPipeline() },
+    { label: 'Lancer la veille',   click: () => runPipeline(new Date().getDay() === 5 ? 'weekly' : 'daily') },
     { type: 'separator' },
     {
       label: 'Lancer au démarrage',
@@ -130,8 +130,9 @@ function extractIncontournables(markdown) {
   return match ? match[0].trim() : null;
 }
 
-function extractWeekLabel(markdown) {
-  const match = markdown.match(/<!-- week: (\d{4}-W\d{2}) -->/);
+function extractLabel(markdown) {
+  // Supporte "<!-- label: 2026-06-16 -->" (daily) et "<!-- label: 2026-W25 -->" (weekly)
+  const match = markdown.match(/<!-- label: ([\w-]+) -->/);
   return match ? match[1] : null;
 }
 
@@ -153,29 +154,30 @@ function pushContent() {
   if (!win) return;
   const markdown = readLatestContent();
   if (!markdown) {
-    win.webContents.send('update-content', { incontournables: null, weekLabel: null, wikiUrl: null });
+    win.webContents.send('update-content', { incontournables: null, weekLabel: null, wikiUrl: null, hasTranslation: false });
     return;
   }
-  const weekLabel = extractWeekLabel(markdown);
-  const wikiUrl = GITHUB_OWNER && GITHUB_REPO && weekLabel
-    ? `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/wiki/${weekLabel}`
+  const label = extractLabel(markdown);
+  const wikiUrl = GITHUB_OWNER && GITHUB_REPO && label
+    ? `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/wiki/${label}`
     : null;
   const hasTranslation = fs.existsSync(OUTPUT_TRANSLATED);
-  console.log('[Widget] pushContent → weekLabel:', weekLabel, '| wikiUrl:', wikiUrl, '| hasTranslation:', hasTranslation);
+  console.log('[Widget] pushContent → label:', label, '| wikiUrl:', wikiUrl, '| hasTranslation:', hasTranslation);
   win.webContents.send('update-content', {
     incontournables: extractIncontournables(markdown),
-    weekLabel,
+    weekLabel: label,
     wikiUrl,
     hasTranslation,
   });
 }
 
-function runPipeline() {
+function runPipeline(mode = 'daily') {
   if (pipelineRunning) return;
   pipelineRunning = true;
   win?.webContents.send('pipeline-status', { running: true });
 
-  const child = spawn('npx', ['tsx', 'src/run-once.ts'], {
+  const args = ['tsx', 'src/run-once.ts', `--mode=${mode}`];
+  const child = spawn('npx', args, {
     cwd: APP_ROOT,
     shell: true,
     stdio: 'inherit',
@@ -194,15 +196,21 @@ app.whenReady().then(() => {
   createTray();
   win.webContents.once('did-finish-load', () => pushContent());
 
-  const cronSchedule = loadEnvValue('CRON_SCHEDULE');
-  if (cronSchedule && cron.validate(cronSchedule)) {
-    cron.schedule(cronSchedule, () => runPipeline());
-    console.log('[Widget] Cron actif —', cronSchedule);
+  const cronDaily = loadEnvValue('CRON_DAILY');
+  if (cronDaily && cron.validate(cronDaily)) {
+    cron.schedule(cronDaily, () => runPipeline('daily'));
+    console.log('[Widget] Cron daily actif —', cronDaily);
+  }
+
+  const cronWeekly = loadEnvValue('CRON_WEEKLY');
+  if (cronWeekly && cron.validate(cronWeekly)) {
+    cron.schedule(cronWeekly, () => runPipeline('weekly'));
+    console.log('[Widget] Cron weekly actif —', cronWeekly);
   }
 });
 
 ipcMain.on('get-latest', () => pushContent());
-ipcMain.on('run-pipeline', () => runPipeline());
+ipcMain.on('run-pipeline', () => runPipeline(new Date().getDay() === 5 ? 'weekly' : 'daily'));
 ipcMain.on('close-window', () => win?.hide());
 ipcMain.on('open-url', (_, url) => shell.openExternal(url));
 ipcMain.on('open-translated', () => {

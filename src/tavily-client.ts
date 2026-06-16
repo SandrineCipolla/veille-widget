@@ -96,9 +96,9 @@ function isRetryable(err: unknown): boolean {
 
 /**
  * Lance une recherche Tavily par section de veille en parallèle.
- * Retourne les résultats consolidés sous forme de texte structuré.
+ * @param daysOverride - Remplace le `days` de chaque topic (mode daily : 2 jours)
  */
-export async function searchVeilleTopics(apiKey: string): Promise<string> {
+export async function searchVeilleTopics(apiKey: string, daysOverride?: number): Promise<string> {
   const client = tavily({ apiKey });
 
   const searches = SEARCH_TOPICS.map((topic) =>
@@ -106,7 +106,7 @@ export async function searchVeilleTopics(apiKey: string): Promise<string> {
       () => client.search(topic.query, {
         searchDepth: 'basic',
         topic: topic.topic,
-        days: topic.days,
+        days: daysOverride ?? topic.days,
         maxResults: MAX_RESULTS_PER_TOPIC,
         ...(topic.includeDomains ? { includeDomains: topic.includeDomains } : {}),
       }),

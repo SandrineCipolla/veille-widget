@@ -18,7 +18,10 @@ const ConfigSchema = z.object({
   // Discord — optionnel, envoi désactivé si absent
   DISCORD_WEBHOOK_URL: z.string().url().optional(),
   // Cron — optionnel, déclenchement automatique désactivé si absent
-  CRON_SCHEDULE: z.string().optional(),
+  // CRON_DAILY : lundi→jeudi (ex: "0 8 * * 1-4")
+  // CRON_WEEKLY : vendredi récap (ex: "0 8 * * 5")
+  CRON_DAILY: z.string().optional(),
+  CRON_WEEKLY: z.string().optional(),
 });
 
 const result = ConfigSchema.safeParse(process.env);
@@ -49,5 +52,6 @@ export const config = {
   githubRepo: data.GITHUB_REPO,
   google: googleConfig,
   discordWebhookUrl: data.DISCORD_WEBHOOK_URL,
-  cronSchedule: data.CRON_SCHEDULE,
+  cronDaily: data.CRON_DAILY,
+  cronWeekly: data.CRON_WEEKLY,
 } as const;
