@@ -53,6 +53,7 @@ function buildPngIcon(size = 32) {
 
 const APP_ROOT = path.join(__dirname, '..');
 const OUTPUT_LATEST = path.join(APP_ROOT, 'output', 'latest.md');
+const OUTPUT_TRANSLATED = path.join(APP_ROOT, 'output', 'latest-traduit.html');
 const ICON_PATH = path.join(APP_ROOT, 'assets', 'icon.ico');
 
 // Lecture minimale du .env pour les infos wiki (pas de dépendance dotenv)
@@ -159,11 +160,13 @@ function pushContent() {
   const wikiUrl = GITHUB_OWNER && GITHUB_REPO && weekLabel
     ? `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/wiki/${weekLabel}`
     : null;
-  console.log('[Widget] pushContent → weekLabel:', weekLabel, '| wikiUrl:', wikiUrl);
+  const hasTranslation = fs.existsSync(OUTPUT_TRANSLATED);
+  console.log('[Widget] pushContent → weekLabel:', weekLabel, '| wikiUrl:', wikiUrl, '| hasTranslation:', hasTranslation);
   win.webContents.send('update-content', {
     incontournables: extractIncontournables(markdown),
     weekLabel,
     wikiUrl,
+    hasTranslation,
   });
 }
 
@@ -202,6 +205,9 @@ ipcMain.on('get-latest', () => pushContent());
 ipcMain.on('run-pipeline', () => runPipeline());
 ipcMain.on('close-window', () => win?.hide());
 ipcMain.on('open-url', (_, url) => shell.openExternal(url));
+ipcMain.on('open-translated', () => {
+  if (fs.existsSync(OUTPUT_TRANSLATED)) shell.openPath(OUTPUT_TRANSLATED);
+});
 ipcMain.on('set-tray-icon', (_, dataUrl) => {
   const icon = nativeImage.createFromDataURL(dataUrl);
   tray?.setImage(icon);

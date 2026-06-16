@@ -119,8 +119,14 @@
     .article-title { font-weight: 600; }
     .article-desc  { color: var(--subtext); margin-top: 1px; }
 
-    .wiki-link {
+    .action-row {
       margin-top: 10px;
+      display: flex;
+      gap: 6px;
+    }
+
+    .wiki-link, .translate-link {
+      flex: 1;
       background: none;
       border: 1px solid rgba(245,166,35,0.3);
       border-radius: 6px;
@@ -129,10 +135,9 @@
       font-weight: 600;
       padding: 6px 10px;
       cursor: pointer;
-      width: 100%;
       transition: background 0.15s;
     }
-    .wiki-link:hover { background: rgba(245,166,35,0.08); }
+    .wiki-link:hover, .translate-link:hover { background: rgba(245,166,35,0.08); }
 
     /* ── Pied de page ── */
     .footer {
@@ -190,7 +195,10 @@
     <div id="articlesList" style="display:none">
       <div class="section-label">🔥 Incontournables</div>
       <ul class="articles" id="articles"></ul>
-      <button class="wiki-link" id="wikiLink" style="display:none">↗ Voir le digest complet</button>
+      <div class="action-row" id="actionRow" style="display:none">
+        <button class="wiki-link" id="wikiLink" style="display:none">↗ Digest complet</button>
+        <button class="translate-link" id="translateLink" style="display:none">🇫🇷 Version FR</button>
+      </div>
     </div>
   </div>
 
@@ -204,7 +212,9 @@
     const emptyStateEl   = document.getElementById('emptyState');
     const articlesListEl = document.getElementById('articlesList');
     const articlesEl     = document.getElementById('articles');
+    const actionRowEl    = document.getElementById('actionRow');
     const wikiLinkEl     = document.getElementById('wikiLink');
+    const translateLinkEl = document.getElementById('translateLink');
     const runBtnEl       = document.getElementById('runBtn');
     const statusEl       = document.getElementById('status');
     const closeBtnEl     = document.getElementById('closeBtn');
@@ -217,21 +227,36 @@
     }
 
     function parseBullets(markdown) {
-      return markdown.split('\n')
-        .map(l => l.trim())
-        .filter(l => l.startsWith('**') || l.startsWith('- **') || l.startsWith('- '))
-        .map(l => {
-          const clean = l.replace(/^-\s*/, '');
-          const m = clean.match(/^\*\*(.+?)\*\*\s*[—–\-]\s*(.+)$/);
-          if (m) return { title: m[1], desc: m[2].slice(0, 120) + (m[2].length > 120 ? '…' : '') };
-          const titleOnly = clean.match(/^\*\*(.+?)\*\*/);
-          if (titleOnly) return { title: titleOnly[1], desc: '' };
-          return { title: clean.replace(/\*\*/g, ''), desc: '' };
-        })
-        .filter(a => a.title && !a.title.startsWith('#'));
+      const lines = markdown.split('\n').map(l => l.trim());
+      const items = [];
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (!line.startsWith('**') && !line.startsWith('- **')) continue;
+        const clean = line.replace(/^-\s*/, '');
+        const titleOnly = clean.match(/^\*\*(.+?)\*\*/);
+        if (!titleOnly) continue;
+        // Format ancien : **Titre** — desc sur la même ligne
+        const sameLine = clean.match(/^\*\*(.+?)\*\*\s*[—–\-]\s*(.+)$/);
+        if (sameLine) {
+          const d = sameLine[2];
+          items.push({ title: sameLine[1], desc: d.slice(0, 120) + (d.length > 120 ? '…' : '') });
+          continue;
+        }
+        // Format nouveau : titre seul, description sur la ligne suivante
+        let desc = '';
+        for (let j = i + 1; j < lines.length && j <= i + 2; j++) {
+          const next = lines[j];
+          if (next && !next.startsWith('**') && !next.startsWith('→') && !next.startsWith('#') && !next.startsWith('*')) {
+            desc = next.replace(/\*\*/g, '').slice(0, 120) + (next.length > 120 ? '…' : '');
+            break;
+          }
+        }
+        items.push({ title: titleOnly[1], desc });
+      }
+      return items.filter(a => a.title && !a.title.startsWith('#'));
     }
 
-    window.veille.onContent(({ incontournables, weekLabel, wikiUrl }) => {
+    window.veille.onContent(({ incontournables, weekLabel, wikiUrl, hasTranslation }) => {
       currentWikiUrl = wikiUrl || null;
 
       if (!incontournables) {
@@ -251,7 +276,11 @@
         </li>
       `).join('');
 
-      wikiLinkEl.style.display = wikiUrl ? 'block' : 'none';
+      const showWiki = !!wikiUrl;
+      const showTranslate = !!hasTranslation;
+      wikiLinkEl.style.display = showWiki ? 'flex' : 'none';
+      translateLinkEl.style.display = showTranslate ? 'flex' : 'none';
+      actionRowEl.style.display = (showWiki || showTranslate) ? 'flex' : 'none';
       emptyStateEl.style.display = 'none';
       articlesListEl.style.display = 'block';
     });
@@ -281,6 +310,7 @@
     closeBtnEl.addEventListener('click', () => window.veille.closeWindow());
     collapseBtnEl.addEventListener('click', () => window.veille.toggleCollapse());
     wikiLinkEl.addEventListener('click', () => { if (currentWikiUrl) window.veille.openUrl(currentWikiUrl); });
+    translateLinkEl.addEventListener('click', () => window.veille.openTranslated());
 
     window.veille.onCollapsed((collapsed) => {
       collapseBtnEl.textContent = collapsed ? '□' : '−';

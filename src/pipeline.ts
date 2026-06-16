@@ -10,6 +10,8 @@ import { getWeekLabel, saveOutput, saveLatestDigest } from './output.js';
 import { uploadToDrive } from './drive-client.js';
 import { extractIncontournables, formatDiscordMessage, postToDiscord } from './discord-client.js';
 import { appendRunLog } from './run-logger.js';
+import { translateDigest } from './translate.js';
+import { saveTranslatedDigest } from './output.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROMPTS_DIR = path.resolve(__dirname, '..', 'prompts');
@@ -37,6 +39,15 @@ export async function runVeille(): Promise<void> {
     const filepath = saveOutput(markdown, OUTPUT_DIR);
     const filename = path.basename(filepath);
     saveLatestDigest(markdown, label, OUTPUT_DIR);
+
+    // Traduction locale uniquement — jamais publiée (output/ est gitignored)
+    try {
+      console.log('[Veille] Traduction locale…');
+      const translated = await translateDigest(markdown, config.openrouterApiKey, config.openrouterModel);
+      saveTranslatedDigest(translated, OUTPUT_DIR);
+    } catch (err) {
+      console.warn('[Veille] Traduction (non bloquant) :', (err as Error).message);
+    }
 
     console.log('[Veille] Publication sur le wiki GitHub…');
     const { commitSha } = await pushToWiki(config.githubToken, config.githubUsername, config.githubRepo, label, markdown);

@@ -8,7 +8,8 @@ import { generateVeilleMarkdown } from '../src/openrouter-client.js';
 import { pushToWiki } from '../src/github-wiki.js';
 import { uploadToDrive } from '../src/drive-client.js';
 import { extractIncontournables, formatDiscordMessage, postToDiscord } from '../src/discord-client.js';
-import { saveOutput, getWeekLabel } from '../src/output.js';
+import { saveOutput, saveLatestDigest, saveTranslatedDigest, getWeekLabel } from '../src/output.js';
+import { translateDigest } from '../src/translate.js';
 import { appendRunLog } from '../src/run-logger.js';
 import fs from 'fs';
 import path from 'path';
@@ -46,7 +47,19 @@ const markdown = `_Généré le ${date}_\n\n${body}`;
 
 // ── 4. Sauvegarde locale ───────────────────────────────────────────────────
 const filepath = saveOutput(markdown);
+saveLatestDigest(markdown, label);
 console.log(`✓ Sauvegardé : ${filepath}`);
+
+// ── 4b. Traduction locale ──────────────────────────────────────────────────
+console.log('\n[4b] Traduction locale (articles [EN])…');
+const t1b = Date.now();
+try {
+  const translated = await translateDigest(markdown, config.openrouterApiKey, config.openrouterModel);
+  saveTranslatedDigest(translated);
+  console.log(`✓ Traduit : output/latest-traduit.md (${Date.now() - t1b} ms)`);
+} catch (err) {
+  console.warn(`⚠ Traduction échouée (non bloquant) : ${(err as Error).message}`);
+}
 
 // ── 5. GitHub wiki ─────────────────────────────────────────────────────────
 if (SKIP_GITHUB) {
