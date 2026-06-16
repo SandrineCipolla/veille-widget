@@ -79,9 +79,14 @@ export async function runVeille(mode: RunMode = 'daily'): Promise<void> {
     console.log(`[Veille] Wiki — commit ${commitSha.slice(0, 7)}`);
 
     if (config.google) {
-      console.log('[Veille] Upload Google Drive…');
-      const driveUrl = await uploadToDrive(config.google, filename, markdown);
-      console.log(`[Veille] Drive → ${driveUrl}`);
+      try {
+        console.log('[Veille] Upload Google Drive…');
+        const driveUrl = await uploadToDrive(config.google, filename, markdown);
+        console.log(`[Veille] Drive → ${driveUrl}`);
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        console.error('[Veille] Drive (non bloquant) :', error.message);
+      }
     }
 
     if (config.discordWebhookUrl) {
