@@ -126,8 +126,11 @@ function readLatestContent() {
 }
 
 function extractIncontournables(markdown) {
-  const match = markdown.match(/##\s*🔥\s*(?:Incontournables|À retenir aujourd'hui)([\s\S]*?)(?=\n##\s|$)/);
-  return match ? match[0].trim() : null;
+  // Préfère la section 🔥, sinon prend la première section ## disponible
+  const highlighted = markdown.match(/##\s*🔥\s*(?:Incontournables|À retenir aujourd'hui)([\s\S]*?)(?=\n##\s|$)/);
+  if (highlighted) return highlighted[0].trim();
+  const first = markdown.match(/##[^\n]+([\s\S]*?)(?=\n##\s|$)/);
+  return first ? first[0].trim() : null;
 }
 
 function extractLabel(markdown) {
