@@ -31,3 +31,13 @@ export function saveLatestDigest(content: string, weekLabel: string, outputDir =
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'latest.md'), `<!-- week: ${weekLabel} -->\n${content}`, 'utf-8');
 }
+
+/**
+ * Écrase outputDir/latest-traduit.md avec la version traduite du digest.
+ * Fichier local uniquement — outputDir est gitignored, il ne part jamais sur GitHub.
+ */
+export function saveTranslatedDigest(content: string, outputDir = './output'): void {
+  const dir = path.resolve(outputDir);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'latest-traduit.md'), content, 'utf-8');
+}
