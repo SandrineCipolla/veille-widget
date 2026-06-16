@@ -227,18 +227,33 @@
     }
 
     function parseBullets(markdown) {
-      return markdown.split('\n')
-        .map(l => l.trim())
-        .filter(l => l.startsWith('**') || l.startsWith('- **') || l.startsWith('- '))
-        .map(l => {
-          const clean = l.replace(/^-\s*/, '');
-          const m = clean.match(/^\*\*(.+?)\*\*\s*[—–\-]\s*(.+)$/);
-          if (m) return { title: m[1], desc: m[2].slice(0, 120) + (m[2].length > 120 ? '…' : '') };
-          const titleOnly = clean.match(/^\*\*(.+?)\*\*/);
-          if (titleOnly) return { title: titleOnly[1], desc: '' };
-          return { title: clean.replace(/\*\*/g, ''), desc: '' };
-        })
-        .filter(a => a.title && !a.title.startsWith('#'));
+      const lines = markdown.split('\n').map(l => l.trim());
+      const items = [];
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (!line.startsWith('**') && !line.startsWith('- **')) continue;
+        const clean = line.replace(/^-\s*/, '');
+        const titleOnly = clean.match(/^\*\*(.+?)\*\*/);
+        if (!titleOnly) continue;
+        // Format ancien : **Titre** — desc sur la même ligne
+        const sameLine = clean.match(/^\*\*(.+?)\*\*\s*[—–\-]\s*(.+)$/);
+        if (sameLine) {
+          const d = sameLine[2];
+          items.push({ title: sameLine[1], desc: d.slice(0, 120) + (d.length > 120 ? '…' : '') });
+          continue;
+        }
+        // Format nouveau : titre seul, description sur la ligne suivante
+        let desc = '';
+        for (let j = i + 1; j < lines.length && j <= i + 2; j++) {
+          const next = lines[j];
+          if (next && !next.startsWith('**') && !next.startsWith('→') && !next.startsWith('#') && !next.startsWith('*')) {
+            desc = next.replace(/\*\*/g, '').slice(0, 120) + (next.length > 120 ? '…' : '');
+            break;
+          }
+        }
+        items.push({ title: titleOnly[1], desc });
+      }
+      return items.filter(a => a.title && !a.title.startsWith('#'));
     }
 
     window.veille.onContent(({ incontournables, weekLabel, wikiUrl, hasTranslation }) => {
