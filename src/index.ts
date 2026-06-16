@@ -33,18 +33,21 @@ const systray = new SysTray({
 });
 
 systray.onClick((action) => {
-  if (action.item.title === 'Lancer la veille') void trigger();
+  if (action.item.title === 'Lancer la veille') void trigger(new Date().getDay() === 5 ? 'weekly' : 'daily');
   if (action.item.title === 'Quitter') { void systray.kill(false); process.exit(0); }
 });
 
 console.log('[Veille] Widget démarré — icône dans la barre des tâches.');
 
-const cronJob = startCronJob(config.cronSchedule, () => void trigger());
-if (cronJob) console.log('[Veille] Cron actif —', config.cronSchedule);
+const cronDailyJob = startCronJob(config.cronDaily, () => void trigger('daily'));
+if (cronDailyJob) console.log('[Veille] Cron daily actif —', config.cronDaily);
 
-async function trigger(): Promise<void> {
+const cronWeeklyJob = startCronJob(config.cronWeekly, () => void trigger('weekly'));
+if (cronWeeklyJob) console.log('[Veille] Cron weekly actif —', config.cronWeekly);
+
+async function trigger(mode: 'daily' | 'weekly' = 'daily'): Promise<void> {
   if (!runGuard.acquire()) { console.log('[Veille] Déjà en cours, veuillez patienter…'); return; }
-  try { await runVeille(); } catch { /* déjà loggé et notifié dans pipeline.ts */ } finally { runGuard.release(); }
+  try { await runVeille(mode); } catch { /* déjà loggé et notifié dans pipeline.ts */ } finally { runGuard.release(); }
 }
 
 function createRunGuard(): { acquire: () => boolean; release: () => void } {

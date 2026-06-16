@@ -1,6 +1,9 @@
 /** Label de semaine ISO 8601 : YYYY-Www (ex. 2026-W23) */
 export type WeekLabel = string;
 
+/** Mode d'exécution du pipeline */
+export type RunMode = 'daily' | 'weekly';
+
 /** Résultat d'un push vers le wiki GitHub */
 export interface WikiPushResult {
   commitSha: string;

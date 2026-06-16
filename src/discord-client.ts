@@ -5,7 +5,7 @@ const DISCORD_MAX_LENGTH = 1900;
  * Retourne null si la section est absente.
  */
 export function extractIncontournables(markdown: string): string | null {
-  const match = markdown.match(/##\s*🔥\s*Incontournables([\s\S]*?)(?=\n##\s|$)/);
+  const match = markdown.match(/##\s*🔥\s*(?:Incontournables|À retenir aujourd'hui)([\s\S]*?)(?=\n##\s|$)/);
   if (!match) return null;
   return match[0].trim();
 }

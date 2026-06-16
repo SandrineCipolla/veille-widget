@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import type { WeekLabel } from './types.js';
+import type { WeekLabel, RunMode } from './types.js';
 
 /** Retourne le label de semaine ISO 8601 courant : YYYY-Www */
 export function getWeekLabel(date: Date = new Date()): WeekLabel {
@@ -12,24 +12,67 @@ export function getWeekLabel(date: Date = new Date()): WeekLabel {
   return `${d.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
 }
 
-/** Sauvegarde le contenu Markdown dans outputDir/YYYY-Www.md. Retourne le chemin absolu. */
-export function saveOutput(content: string, outputDir = './output'): string {
+/** Retourne la date locale au format YYYY-MM-DD */
+export function getDateLabel(date: Date = new Date()): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/** Retourne le label de run selon le mode : date (daily) ou semaine ISO (weekly) */
+export function getRunLabel(mode: RunMode, date: Date = new Date()): string {
+  return mode === 'daily' ? getDateLabel(date) : getWeekLabel(date);
+}
+
+/** Sauvegarde le digest dans outputDir/YYYY-Www.md (weekly) ou YYYY-MM-DD.md (daily). */
+export function saveOutput(content: string, mode: RunMode = 'weekly', outputDir = './output'): string {
   const dir = path.resolve(outputDir);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  const filepath = path.join(dir, `${getWeekLabel()}.md`);
+  const filename = mode === 'daily' ? `${getDateLabel()}.md` : `${getWeekLabel()}.md`;
+  const filepath = path.join(dir, filename);
   fs.writeFileSync(filepath, content, 'utf-8');
   return filepath;
 }
 
 /**
  * Écrase outputDir/latest.md avec le digest courant.
- * Préfixe le label ISO en commentaire HTML pour que le widget Electron puisse le lire
- * sans dépendre du format du titre généré par le modèle.
+ * Préfixe le label en commentaire HTML pour que le widget puisse le lire.
+ * Le label peut être une date (2026-06-16) ou une semaine (2026-W25).
  */
-export function saveLatestDigest(content: string, weekLabel: string, outputDir = './output'): void {
+export function saveLatestDigest(content: string, label: string, outputDir = './output'): void {
   const dir = path.resolve(outputDir);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, 'latest.md'), `<!-- week: ${weekLabel} -->\n${content}`, 'utf-8');
+  fs.writeFileSync(path.join(dir, 'latest.md'), `<!-- label: ${label} -->\n${content}`, 'utf-8');
+}
+
+/**
+ * Lit les digests quotidiens du lundi au jeudi de la semaine courante.
+ * Utilisé par le run du vendredi pour construire le récap hebdomadaire.
+ */
+export function getWeekDailyDigests(outputDir = './output'): string {
+  const dir = path.resolve(outputDir);
+  const today = new Date();
+  const monday = new Date(today);
+  const dayOfWeek = today.getDay();
+  const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  monday.setDate(today.getDate() + diff);
+  monday.setHours(0, 0, 0, 0);
+
+  const sections: string[] = [];
+  const dayNames = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi'];
+  for (let i = 0; i < 4; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const dateLabel = getDateLabel(d);
+    const filepath = path.join(dir, `${dateLabel}.md`);
+    if (fs.existsSync(filepath)) {
+      const content = fs.readFileSync(filepath, 'utf-8')
+        .replace(/^<!-- label: .+ -->\n/, '');
+      sections.push(`### ${dayNames[i]} ${dateLabel}\n\n${content}`);
+    }
+  }
+  return sections.join('\n\n---\n\n');
 }
 
 /**

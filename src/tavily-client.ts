@@ -11,6 +11,8 @@ interface SearchTopic {
   days: number;
   topic: 'news' | 'general';
   includeDomains?: string[];
+  /** Si true, le daysOverride du mode daily ne s'applique pas (topics FR peu fréquents) */
+  keepDays?: boolean;
 }
 
 /**
@@ -64,6 +66,7 @@ const SEARCH_TOPICS: ReadonlyArray<SearchTopic> = [
     days: 14,
     topic: 'general',
     includeDomains: ['cert.ssi.gouv.fr', 'ssi.gouv.fr', 'cyber.gouv.fr'],
+    keepDays: true,
   },
   {
     label: 'Réglementation & institutions numériques [FR]',
@@ -71,6 +74,7 @@ const SEARCH_TOPICS: ReadonlyArray<SearchTopic> = [
     days: 14,
     topic: 'general',
     includeDomains: ['cnil.fr', 'numerique.gouv.fr', 'data.gouv.fr', 'legifrance.gouv.fr'],
+    keepDays: true,
   },
   {
     label: 'Communauté dev francophone [FR]',
@@ -78,6 +82,7 @@ const SEARCH_TOPICS: ReadonlyArray<SearchTopic> = [
     days: 14,
     topic: 'general',
     includeDomains: ['developpez.com', 'humancoders.com', 'journalduhacker.net'],
+    keepDays: true,
   },
 ];
 
@@ -96,9 +101,9 @@ function isRetryable(err: unknown): boolean {
 
 /**
  * Lance une recherche Tavily par section de veille en parallèle.
- * Retourne les résultats consolidés sous forme de texte structuré.
+ * @param daysOverride - Remplace le `days` de chaque topic (mode daily : 2 jours)
  */
-export async function searchVeilleTopics(apiKey: string): Promise<string> {
+export async function searchVeilleTopics(apiKey: string, daysOverride?: number): Promise<string> {
   const client = tavily({ apiKey });
 
   const searches = SEARCH_TOPICS.map((topic) =>
@@ -106,7 +111,7 @@ export async function searchVeilleTopics(apiKey: string): Promise<string> {
       () => client.search(topic.query, {
         searchDepth: 'basic',
         topic: topic.topic,
-        days: topic.days,
+        days: (daysOverride && !topic.keepDays) ? daysOverride : topic.days,
         maxResults: MAX_RESULTS_PER_TOPIC,
         ...(topic.includeDomains ? { includeDomains: topic.includeDomains } : {}),
       }),
