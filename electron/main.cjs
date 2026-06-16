@@ -126,7 +126,7 @@ function readLatestContent() {
 }
 
 function extractIncontournables(markdown) {
-  const match = markdown.match(/##\s*🔥\s*Incontournables([\s\S]*?)(?=\n##\s|$)/);
+  const match = markdown.match(/##\s*🔥\s*(?:Incontournables|À retenir aujourd'hui)([\s\S]*?)(?=\n##\s|$)/);
   return match ? match[0].trim() : null;
 }
 
