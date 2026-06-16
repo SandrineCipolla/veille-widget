@@ -11,6 +11,8 @@ interface SearchTopic {
   days: number;
   topic: 'news' | 'general';
   includeDomains?: string[];
+  /** Si true, le daysOverride du mode daily ne s'applique pas (topics FR peu fréquents) */
+  keepDays?: boolean;
 }
 
 /**
@@ -64,6 +66,7 @@ const SEARCH_TOPICS: ReadonlyArray<SearchTopic> = [
     days: 14,
     topic: 'general',
     includeDomains: ['cert.ssi.gouv.fr', 'ssi.gouv.fr', 'cyber.gouv.fr'],
+    keepDays: true,
   },
   {
     label: 'Réglementation & institutions numériques [FR]',
@@ -71,6 +74,7 @@ const SEARCH_TOPICS: ReadonlyArray<SearchTopic> = [
     days: 14,
     topic: 'general',
     includeDomains: ['cnil.fr', 'numerique.gouv.fr', 'data.gouv.fr', 'legifrance.gouv.fr'],
+    keepDays: true,
   },
   {
     label: 'Communauté dev francophone [FR]',
@@ -78,6 +82,7 @@ const SEARCH_TOPICS: ReadonlyArray<SearchTopic> = [
     days: 14,
     topic: 'general',
     includeDomains: ['developpez.com', 'humancoders.com', 'journalduhacker.net'],
+    keepDays: true,
   },
 ];
 
@@ -106,7 +111,7 @@ export async function searchVeilleTopics(apiKey: string, daysOverride?: number):
       () => client.search(topic.query, {
         searchDepth: 'basic',
         topic: topic.topic,
-        days: daysOverride ?? topic.days,
+        days: (daysOverride && !topic.keepDays) ? daysOverride : topic.days,
         maxResults: MAX_RESULTS_PER_TOPIC,
         ...(topic.includeDomains ? { includeDomains: topic.includeDomains } : {}),
       }),

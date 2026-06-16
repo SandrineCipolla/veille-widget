@@ -44,7 +44,7 @@ FORMAT DE SORTIE (Markdown) :
 
 ## 🌍 Source de la semaine
 [Résumé en français d'un article FR ou EN particulièrement significatif, 6-8 lignes]
-→ Source originale : [URL]
+→ [Source originale](URL)
 
 ## 🗓️ À surveiller la semaine prochaine
 [2-3 sujets : releases attendues sur ta stack, CVE en cours de patch, échéances RNCP uniquement]
@@ -53,4 +53,4 @@ FORMAT DE SORTIE (Markdown) :
 Chaque item hors "Source de la semaine" suit ce format :
 **Titre [FR]** ou **Titre [EN]** selon la langue de la source — OBLIGATOIRE.
 Puis : 3 à 5 phrases : contexte, ce qui change, impact concret ou lien RNCP explicite.
-→ [URL ou "lien à vérifier"]
+→ [Source](URL) — si l'URL est incertaine : → lien à vérifier

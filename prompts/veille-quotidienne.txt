@@ -33,4 +33,4 @@ FORMAT DE SORTIE (Markdown) :
 Chaque item suit ce format :
 **Titre [FR]** ou **Titre [EN]** selon la langue de la source — OBLIGATOIRE.
 Puis : 2 à 3 phrases : contexte, ce qui change, impact concret ou lien RNCP.
-→ [URL ou "lien à vérifier"]
+→ [Source](URL) — si l'URL est incertaine : → lien à vérifier
