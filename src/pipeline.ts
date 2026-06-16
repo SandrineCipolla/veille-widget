@@ -40,10 +40,14 @@ export async function runVeille(): Promise<void> {
     const filename = path.basename(filepath);
     saveLatestDigest(markdown, label, OUTPUT_DIR);
 
-    // Traduction locale — non bloquante, jamais publiée (output/ est gitignored)
-    translateDigest(markdown, config.openrouterApiKey, config.openrouterModel)
-      .then((translated) => saveTranslatedDigest(translated, OUTPUT_DIR))
-      .catch((err: Error) => console.warn('[Veille] Traduction (non bloquant) :', err.message));
+    // Traduction locale uniquement — jamais publiée (output/ est gitignored)
+    try {
+      console.log('[Veille] Traduction locale…');
+      const translated = await translateDigest(markdown, config.openrouterApiKey, config.openrouterModel);
+      saveTranslatedDigest(translated, OUTPUT_DIR);
+    } catch (err) {
+      console.warn('[Veille] Traduction (non bloquant) :', (err as Error).message);
+    }
 
     console.log('[Veille] Publication sur le wiki GitHub…');
     const { commitSha } = await pushToWiki(config.githubToken, config.githubUsername, config.githubRepo, label, markdown);

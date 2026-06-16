@@ -53,7 +53,7 @@ function buildPngIcon(size = 32) {
 
 const APP_ROOT = path.join(__dirname, '..');
 const OUTPUT_LATEST = path.join(APP_ROOT, 'output', 'latest.md');
-const OUTPUT_TRANSLATED = path.join(APP_ROOT, 'output', 'latest-traduit.md');
+const OUTPUT_TRANSLATED = path.join(APP_ROOT, 'output', 'latest-traduit.html');
 const ICON_PATH = path.join(APP_ROOT, 'assets', 'icon.ico');
 
 // Lecture minimale du .env pour les infos wiki (pas de dépendance dotenv)
