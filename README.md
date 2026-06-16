@@ -1,85 +1,114 @@
-# veille-widget
+# veille-widget 🔍
 
-Widget systray Windows automatisant une veille technologique hebdomadaire personnalisée.
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-22+-green)](https://nodejs.org/)
+[![Electron](https://img.shields.io/badge/Electron-42-47848f)](https://www.electronjs.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+
+> Widget bureau Windows automatisant une veille technologique quotidienne et hebdomadaire personnalisée.
 
 Développé dans le cadre du RNCP 7 "Expert en Architecture et Développement Logiciel" (Ingétis, soutenance mars 2027) — constitue la preuve documentée de la compétence **C1.2 Veille technologique** du Bloc 1.
 
----
-
-## Pipeline
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  Déclenchement                                                   │
-│  ┌──────────────┐     ┌─────────────────────────────────────┐   │
-│  │  Clic systray│     │  node-cron (CRON_SCHEDULE=0 8 * * 1)│   │
-│  └──────┬───────┘     └─────────────────┬───────────────────┘   │
-│         └──────────────────┬────────────┘                       │
-└──────────────────────────┬─┘───────────────────────────────────-┘
-                           ▼
-              ┌────────────────────────┐
-              │  Tavily — recherche web│
-              │  9 topics × 3 résultats│
-              │  (7 derniers jours)    │
-              └────────────┬───────────┘
-                           ▼
-              ┌────────────────────────┐
-              │  OpenRouter            │
-              │  google/gemma-4-31b    │
-              │  Synthèse → Markdown   │
-              │  structuré (9 sections)│
-              └────────────┬───────────┘
-                           ▼
-              ┌────────────────────────┐
-              │  Sauvegarde locale     │
-              │  output/YYYY-Www.md    │
-              └────────────┬───────────┘
-                           ▼
-         ┌─────────────────┴──────────────────┐
-         ▼                 ▼                  ▼
-┌────────────────┐ ┌──────────────┐ ┌──────────────────┐
-│  GitHub Wiki   │ │ Google Drive │ │ Discord webhook  │
-│  YYYY-Www.md   │ │  (optionnel) │ │  Incontournables │
-│  (archivage)   │ └──────────────┘ │  (optionnel)     │
-└────────────────┘                  └──────────────────┘
-         │
-         ▼
-┌────────────────┐
-│  Notification  │
-│  Windows native│
-└────────────────┘
-```
-
-**9 topics Tavily :** Stack TS/React/Node.js · Architecture logicielle · IA & LLM en production · Sécurité applicative · Réglementation numérique · DevOps & CI/CD · Numérique responsable · Accessibilité · Outils dev & pratiques
+## 🔗 **[Wiki de contenu →](https://github.com/SandrineCipolla/sandrine-veille-techno/wiki)** | 📖 **[Documentation technique →](https://github.com/SandrineCipolla/veille-widget/wiki)**
 
 ---
 
-## Stack
+## ✨ Fonctionnalités principales
+
+- ⚡ **Widget Electron** — fenêtre flottante + icône systray, toujours accessible
+- 🗓️ **Deux modes** — veille daily (lun-jeu) et récap hebdomadaire (vendredi)
+- 🌍 **Sources EN + FR** — 6 topics internationaux + 3 sources officielles françaises (CERT-FR, CNIL, developpez.com)
+- 🤖 **Rédaction IA** — OpenRouter synthétise les résultats en digest Markdown structuré
+- 📝 **Wiki GitHub** — archivage automatique par date (`YYYY-MM-DD`) ou semaine ISO (`YYYY-Www`)
+- 🇫🇷 **Traduction HTML locale** — version française privée, ouverte dans le navigateur (jamais publiée)
+- ☁️ **Google Drive** — backup optionnel (OAuth2, app publiée)
+- 🔔 **Discord** — notification des incontournables (optionnel)
+- ⏰ **Cron** — déclenchement automatique configurable
+
+---
+
+## 🗓️ Modes de veille
+
+### Daily — lundi → jeudi
+
+- Tavily : 2 derniers jours (topics FR gardent 14 jours)
+- Prompt : `veille-quotidienne.txt` — digest court, focalisé sur le nouveau
+- Wiki page : `YYYY-MM-DD`
+
+### Weekly récap — vendredi
+
+- Tavily : 2 derniers jours (nouveautés du vendredi)
+- Entrée LLM : digests lun-jeu + nouveautés du vendredi
+- Prompt : `veille-recap.txt` — synthèse de la semaine, sujets récurrents, incontournables
+- Wiki page : `YYYY-Www`
+
+---
+
+## 🔄 Pipeline
+
+```
+[Widget Electron] ──── clic "Lancer la veille" ────┐
+[node-cron]       ── CRON_DAILY / CRON_WEEKLY ──────┤
+                                                    ▼
+                               ┌─────────────────────────────────────┐
+                               │  Tavily — 9 topics × 3 résultats    │
+                               │  6 topics EN (7j)                   │
+                               │  3 topics FR (14j, keepDays=true)   │
+                               └─────────────────┬───────────────────┘
+                                                 │
+                    [mode weekly] ───────────────┤
+                    Lecture digests lun-jeu       │
+                                                 ▼
+                               ┌─────────────────────────────────────┐
+                               │  OpenRouter LLM                     │
+                               │  veille-quotidienne.txt (daily)     │
+                               │  veille-recap.txt (weekly)          │
+                               │  → Markdown structuré               │
+                               └────────────┬────────────────────────┘
+                                            ▼
+                          ┌─────────────────┴──────────────────┐
+                          ▼                                     ▼
+               ┌──────────────────┐                ┌──────────────────────┐
+               │  GitHub Wiki     │                │  Traduction FR       │
+               │  YYYY-MM-DD.md   │                │  latest-traduit.html │
+               │  ou YYYY-Www.md  │                │  (local, privé)      │
+               └────────┬─────────┘                └──────────────────────┘
+                        │
+               ┌────────┴────────┐
+               ▼                 ▼
+        Google Drive         Discord
+        (optionnel)          (optionnel)
+```
+
+---
+
+## 🛠️ Stack
 
 | Rôle | Outil |
 |------|-------|
+| Widget UI | Electron 42 |
 | Runtime | Node.js 22, TypeScript strict, `tsx` |
 | Recherche web | `@tavily/core` |
-| LLM | OpenRouter — `google/gemma-4-31b-it:free` |
+| LLM | OpenRouter — modèle configurable via `OPENROUTER_MODEL` |
 | Stockage | GitHub Wiki via `simple-git` |
 | Cloud backup | Google Drive via `googleapis` (OAuth2) |
-| Systray | `systray2` + `node-notifier` |
+| Notifications | `node-notifier` |
 | Cron | `node-cron` |
 | Validation | `zod` |
 
 ---
 
-## Prérequis
+## 🚀 Prérequis
 
 - Node.js 22+
-- Un compte [Tavily](https://tavily.com) (clé API gratuite)
-- Un compte [OpenRouter](https://openrouter.ai) (clé API gratuite)
-- Un token GitHub classic avec scope `repo`
-- Un repo GitHub **dédié au contenu** avec le wiki activé (créer une première page manuellement) — ce repo est séparé du repo du widget
+- Compte [Tavily](https://tavily.com) — clé API gratuite
+- Compte [OpenRouter](https://openrouter.ai) — clé API gratuite
+- Token GitHub classic avec scope `repo`
+- Repo GitHub dédié au contenu avec le wiki activé (créer une première page manuellement)
 
 ---
 
-## Installation
+## 📦 Installation
 
 ```bash
 git clone https://github.com/SandrineCipolla/veille-widget.git
@@ -91,97 +120,115 @@ cp .env.example .env
 
 ---
 
-## Configuration `.env`
+## ⚙️ Configuration `.env`
 
 ```env
 TAVILY_API_KEY=tvly-...
 OPENROUTER_API_KEY=sk-or-...
 OPENROUTER_MODEL=google/gemma-4-31b-it:free
-GITHUB_TOKEN=ghp_...          # classic PAT, scope repo
+GITHUB_TOKEN=ghp_...           # classic PAT, scope repo
 GITHUB_USERNAME=MonPseudo
-GITHUB_REPO=mon-repo-contenu  # repo dédié au contenu — son wiki recevra les digests
+GITHUB_REPO=mon-repo-contenu   # repo dédié au contenu wiki
 
-# Optionnels
-GOOGLE_CLIENT_ID=             # voir scripts/auth-google.ts
+# Cron — désactivé si absent
+CRON_DAILY=0 8 * * 1-4         # lundi → jeudi 8h
+CRON_WEEKLY=0 8 * * 5          # vendredi 8h (récap)
+
+# Google Drive — optionnel (voir scripts/auth-google.ts)
+GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 GOOGLE_REFRESH_TOKEN=
 GOOGLE_DRIVE_FOLDER_ID=
 
-DISCORD_WEBHOOK_URL=          # webhook du canal Discord cible
-CRON_SCHEDULE=0 8 * * 1       # lundi 8h (désactivé si absent)
+# Discord — optionnel
+DISCORD_WEBHOOK_URL=
 ```
 
 ---
 
-## Lancement
+## 🖥️ Lancement
 
 ```bash
-# Widget complet (systray + cron)
-npm start
+# Widget Electron complet (fenêtre + systray)
+npm run electron
 
-# Test pipeline sans systray
-npx tsx scripts/test-pipeline.ts
-
-# Options disponibles
-npx tsx scripts/test-pipeline.ts --skip-github --skip-drive --skip-discord
+# Test pipeline sans widget
+npx tsx scripts/test-pipeline.ts --mode=daily --skip-github --skip-drive --skip-discord
+npx tsx scripts/test-pipeline.ts --mode=weekly --skip-github --skip-drive --skip-discord
 
 # Authentification Google Drive (one-shot)
 npx tsx scripts/auth-google.ts
-
-# Lister les modèles gratuits OpenRouter
-npx tsx scripts/list-free-models.ts
 ```
 
 ---
 
-## Structure
+## 📁 Structure
 
 ```
 src/
-├── index.ts              # orchestration + systray
+├── index.ts              # orchestration systray (headless)
 ├── config.ts             # validation .env (zod)
-├── tavily-client.ts      # 9 topics en parallèle
-├── openrouter-client.ts  # appel LLM, retry x3
+├── pipeline.ts           # pipeline principal (RunMode daily/weekly)
+├── tavily-client.ts      # 9 topics EN+FR en parallèle
+├── openrouter-client.ts  # appel LLM avec retry x3
 ├── github-wiki.ts        # push wiki via simple-git
 ├── drive-client.ts       # upload Google Drive OAuth2
-├── discord-client.ts     # webhook Discord
+├── discord-client.ts     # webhook + extractIncontournables
+├── translate.ts          # traduction locale EN→FR
+├── output.ts             # sauvegarde, labels, HTML traduction
 ├── cron.ts               # déclenchement planifié
-├── notifier.ts           # notification Windows
-├── output.ts             # sauvegarde locale + label semaine ISO
-├── retry.ts              # backoff exponentiel
-└── types.ts              # interfaces partagées
+├── notifier.ts           # notification Windows native
+├── run-once.ts           # entrée CLI (--mode=daily|weekly)
+├── retry.ts              # backoff exponentiel partagé
+└── types.ts              # interfaces et RunMode
+electron/
+├── main.cjs              # process principal Electron (CJS)
+├── preload.cjs           # bridge IPC contextIsolation
+└── renderer/
+    └── index.html        # UI du widget
 prompts/
-└── veille-hebdo.txt      # system prompt (source of truth)
+├── veille-quotidienne.txt # prompt daily
+└── veille-recap.txt       # prompt récap vendredi
 scripts/
-├── test-pipeline.ts      # test sans systray
-├── auth-google.ts        # OAuth2 Google Drive
-└── list-free-models.ts   # modèles gratuits OpenRouter
-docs/
-├── roadmap.md            # features prévues
-└── n8n-setup.md          # workflow n8n RSS digest alternatif
-workflows/
-└── n8n-rss-digest.json   # export workflow n8n importable
+├── test-pipeline.ts      # test complet (--mode, --skip-*)
+└── auth-google.ts        # OAuth2 Google Drive (one-shot)
+output/                   # gitignored — digests locaux
+├── YYYY-MM-DD.md
+├── YYYY-Www.md
+├── latest.md
+└── latest-traduit.html
 ```
 
 ---
 
-## Sorties
+## 📊 Sorties
 
 | Destination | Format | Exemple |
-|------------|--------|---------|
-| Local | `output/YYYY-Www.md` | `output/2026-W24.md` |
-| GitHub Wiki | Page par semaine dans un repo dédié | [sandrine-veille-techno/wiki →](https://github.com/SandrineCipolla/sandrine-veille-techno/wiki) |
-| Google Drive | Fichier `.md` dans un dossier | optionnel |
+|-------------|--------|---------|
+| Local | `output/YYYY-MM-DD.md` ou `output/YYYY-Www.md` | `output/2026-06-16.md` |
+| Traduction | `output/latest-traduit.html` | privé, jamais publié |
+| GitHub Wiki | Page par jour ou par semaine | [sandrine-veille-techno/wiki →](https://github.com/SandrineCipolla/sandrine-veille-techno/wiki) |
+| Google Drive | Fichier `.md` dans un dossier Drive | optionnel |
 | Discord | Message avec les 🔥 Incontournables | optionnel |
 
 ---
 
-## Lien RNCP 7
+## 🎓 Lien RNCP 7
 
-Ce projet constitue la preuve de la compétence **C1.2** (veille technologique, Bloc 1).
+Ce projet constitue la preuve de la compétence **C1.2** (veille technologique, Bloc 1) — RNCP 7 "Expert en Architecture et Développement Logiciel", Ingétis, soutenance mars 2027.
 
 Deux repos distincts :
-- **`veille-widget`** (ce repo) — le code du widget et de la pipeline
-- **`sandrine-veille-techno`** — le contenu de la veille, archivé dans son wiki
+- **`veille-widget`** (ce repo) — le code du widget et du pipeline
+- **[sandrine-veille-techno](https://github.com/SandrineCipolla/sandrine-veille-techno)** — le contenu de la veille, archivé dans son wiki
 
-Le digest hebdomadaire archivé dans le wiki forme une trace documentée, datée et exploitable directement dans le mémoire et lors des soutenances. Les 9 topics couvrent les 4 blocs de compétences Ingétis.
+| Topic Tavily | Bloc RNCP couvert |
+|---|---|
+| Stack TS/React/Node.js | Bloc 2 — Architecture & développement |
+| Architecture & patterns | Bloc 2 — Architecture & développement |
+| IA & LLM en production | Bloc 1 — Veille & innovation |
+| Sécurité — CVE & advisories | Bloc 3 — DevOps & production |
+| DevOps & CI/CD | Bloc 3 — DevOps & production |
+| Numérique responsable & accessibilité | Bloc 1 — Veille & innovation |
+| CERT-FR & ANSSI [FR] | Bloc 3 — Sécurité |
+| Réglementation & CNIL [FR] | Bloc 1 — Veille réglementaire |
+| Communauté dev francophone [FR] | Bloc 1 — Veille & innovation |
