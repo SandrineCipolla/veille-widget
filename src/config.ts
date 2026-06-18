@@ -16,7 +16,7 @@ const ConfigSchema = z.object({
   GOOGLE_REFRESH_TOKEN: z.string().optional(),
   GOOGLE_DRIVE_FOLDER_ID: z.string().optional(),
   // Discord — optionnel, envoi désactivé si absent
-  DISCORD_WEBHOOK_URL: z.string().url().optional(),
+  DISCORD_WEBHOOK_URL: z.preprocess(v => v || undefined, z.string().url().optional()),
   // Cron — optionnel, déclenchement automatique désactivé si absent
   // CRON_DAILY : lundi→jeudi (ex: "0 8 * * 1-4")
   // CRON_WEEKLY : vendredi récap (ex: "0 8 * * 5")
