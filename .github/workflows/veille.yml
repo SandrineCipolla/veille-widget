@@ -41,6 +41,6 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           OPENROUTER_MODEL: ${{ secrets.OPENROUTER_MODEL }}
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-          GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
-          GITHUB_REPO: ${{ secrets.GITHUB_REPO }}
+          GITHUB_USERNAME: ${{ secrets.WIKI_USERNAME }}
+          GITHUB_REPO: ${{ secrets.WIKI_REPO }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
