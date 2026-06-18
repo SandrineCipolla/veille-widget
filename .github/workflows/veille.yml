@@ -1,0 +1,46 @@
+name: Veille Technologique
+
+on:
+  schedule:
+    - cron: '30 7 * * 1-5'  # 9h30 Paris (UTC+2 été) — lun→ven
+  workflow_dispatch:          # déclenchement manuel depuis GitHub
+
+jobs:
+  veille:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Clé de semaine ISO
+        run: echo "WEEK_KEY=$(date +%Y-W%V)" >> $GITHUB_ENV
+
+      - name: Restaurer les digests de la semaine (recap vendredi)
+        uses: actions/cache@v4
+        with:
+          path: output/
+          key: output-${{ env.WEEK_KEY }}-${{ github.run_number }}
+          restore-keys: |
+            output-${{ env.WEEK_KEY }}-
+
+      - name: Lancer la veille
+        run: |
+          DAY=$(date +%u)
+          if [ "$DAY" = "5" ]; then MODE="weekly"; else MODE="daily"; fi
+          echo "Mode : $MODE (jour $DAY)"
+          npx tsx src/run-once.ts --mode=$MODE
+        env:
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL: ${{ secrets.OPENROUTER_MODEL }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
+          GITHUB_REPO: ${{ secrets.GITHUB_REPO }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
