@@ -46,6 +46,9 @@ FORMAT DE SORTIE (Markdown) :
 [Résumé en français d'un article FR ou EN particulièrement significatif, 6-8 lignes]
 → [Source originale](URL)
 
+## 🆕 Nouveautés du vendredi
+[News fraîches du jour uniquement — issues des NOUVEAUTÉS DU VENDREDI. Omettre si rien de notable.]
+
 ## 🗓️ À surveiller la semaine prochaine
 [2-3 sujets : releases attendues sur ta stack, CVE en cours de patch, échéances RNCP uniquement]
 

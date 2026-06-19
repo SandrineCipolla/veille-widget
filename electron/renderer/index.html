@@ -269,7 +269,7 @@
 
       weekLabelEl.textContent = weekLabel || '—';
       const isWeekly = weekLabel && /^\d{4}-W/.test(weekLabel);
-      sectionLabelEl.textContent = isWeekly ? '📋 Récap de la semaine' : '🔥 À retenir';
+      sectionLabelEl.textContent = isWeekly ? '📋 Récap de la semaine' : '🔥 Incontournables';
       const items = parseBullets(incontournables);
 
       articlesEl.innerHTML = items.map(a => `
