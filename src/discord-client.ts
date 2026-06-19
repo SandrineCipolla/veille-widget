@@ -22,7 +22,9 @@ export function formatDiscordMessage(
 ): string {
   const wikiUrl = `https://github.com/${wikiOwner}/${wikiRepo}/wiki`;
   const footer = `\n\n📖 [Lire le digest complet](${wikiUrl})`;
-  const header = `**🗓️ Veille techno — ${weekLabel}**\n\n`;
+  const isWeekly = /^\d{4}-W/.test(weekLabel);
+  const title = isWeekly ? `📋 Récap de la semaine — ${weekLabel}` : `🗓️ Veille techno — ${weekLabel}`;
+  const header = `**${title}**\n\n`;
   const body = header + incontournables + footer;
 
   if (body.length <= DISCORD_MAX_LENGTH) return body;

@@ -193,7 +193,7 @@
       <div class="hint">Cliquez sur « Lancer la veille »<br>pour générer le premier rapport.</div>
     </div>
     <div id="articlesList" style="display:none">
-      <div class="section-label">🔥 Incontournables</div>
+      <div class="section-label" id="sectionLabel">🔥 À retenir</div>
       <ul class="articles" id="articles"></ul>
       <div class="action-row" id="actionRow" style="display:none">
         <button class="wiki-link" id="wikiLink" style="display:none">↗ Digest complet</button>
@@ -212,6 +212,7 @@
     const emptyStateEl   = document.getElementById('emptyState');
     const articlesListEl = document.getElementById('articlesList');
     const articlesEl     = document.getElementById('articles');
+    const sectionLabelEl = document.getElementById('sectionLabel');
     const actionRowEl    = document.getElementById('actionRow');
     const wikiLinkEl     = document.getElementById('wikiLink');
     const translateLinkEl = document.getElementById('translateLink');
@@ -267,6 +268,8 @@
       }
 
       weekLabelEl.textContent = weekLabel || '—';
+      const isWeekly = weekLabel && /^\d{4}-W/.test(weekLabel);
+      sectionLabelEl.textContent = isWeekly ? '📋 Récap de la semaine' : '🔥 À retenir';
       const items = parseBullets(incontournables);
 
       articlesEl.innerHTML = items.map(a => `
