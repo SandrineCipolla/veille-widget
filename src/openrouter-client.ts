@@ -15,23 +15,47 @@ function isRetryable(err: unknown): boolean {
   return status === 429 || status === 502 || status === 503;
 }
 
+// Un 404 signifie que le modèle n'existe plus sur OpenRouter (déprécié/retiré) —
+// inutile de retenter le même modèle, mais il faut basculer sur le suivant de la liste.
+function isModelUnavailable(err: unknown): boolean {
+  const status = (err as { status?: number }).status;
+  return status === 404 || isRetryable(err);
+}
+
 /**
  * Envoie le system prompt de veille + les résultats Tavily à OpenRouter.
  * - systemPrompt : instructions de format et de filtrage (role: system)
  * - searchResults : résultats Tavily bruts à synthétiser (role: user)
- * Le modèle est configurable via OPENROUTER_MODEL dans .env.
+ * `models` est essayé dans l'ordre : si un modèle renvoie 429/502/503 après
+ * épuisement de ses tentatives, on passe au suivant. Le dernier de la liste
+ * doit être un modèle payant pour garantir que le pipeline aboutit toujours.
+ * Retourne aussi le nom du modèle qui a effectivement répondu (pour les logs).
  */
 export async function generateVeilleMarkdown(
     apiKey: string,
-    model: string,
+    models: string[],
     systemPrompt: string,
     searchResults: string,
-): Promise<string> {
-  return withRetry(
-      () => callOpenRouter(apiKey, model, systemPrompt, searchResults),
-      isRetryable,
-      RETRY_BASE_DELAY_MS,
-  );
+): Promise<{ content: string; modelUsed: string }> {
+  let lastErr: unknown;
+
+  for (const model of models) {
+    try {
+      const content = await withRetry(
+          () => callOpenRouter(apiKey, model, systemPrompt, searchResults),
+          isRetryable,
+          RETRY_BASE_DELAY_MS,
+      );
+      return { content, modelUsed: model };
+    } catch (err) {
+      lastErr = err;
+      const status = (err as { status?: number }).status;
+      if (!isModelUnavailable(err)) throw err; // erreur définitive (401, réponse invalide...) — inutile d'essayer un autre modèle
+      console.warn(`[OpenRouter] Modèle ${model} indisponible (${status ?? '?'}) — passage au suivant…`);
+    }
+  }
+
+  throw lastErr instanceof Error ? lastErr : new Error('Tous les modèles OpenRouter ont échoué');
 }
 
 async function callOpenRouter(
@@ -82,7 +106,9 @@ async function callOpenRouter(
     if (e.status === 401) throw new Error('OpenRouter : clé API invalide (401)');
     if (e.status === 429)
       throw Object.assign(new Error('OpenRouter : quota dépassé (429)'), { status: 429 });
-    throw new Error(`OpenRouter erreur ${e.status ?? '?'} : ${e.message}`);
+    // Conserve le status (404 = modèle déprécié/retiré, 502/503 = indispo temporaire...)
+    // pour que le fallback multi-modèles puisse réagir correctement.
+    throw Object.assign(new Error(`OpenRouter erreur ${e.status ?? '?'} : ${e.message}`), { status: e.status });
   }
 
   const rawContent: unknown = completion.choices[0]?.message?.content;

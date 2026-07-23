@@ -54,8 +54,9 @@ export async function runVeille(mode: RunMode = 'daily'): Promise<void> {
       }
     }
 
-    console.log(`[Veille] Rédaction OpenRouter (${config.openrouterModel})…`);
-    const body = await generateVeilleMarkdown(config.openrouterApiKey, config.openrouterModel, prompt, searchInput);
+    console.log(`[Veille] Rédaction OpenRouter (${config.openrouterModels.join(' → ')})…`);
+    const { content: body, modelUsed } = await generateVeilleMarkdown(config.openrouterApiKey, config.openrouterModels, prompt, searchInput);
+    console.log(`[Veille] Modèle utilisé : ${modelUsed}`);
 
     const date = new Date().toLocaleDateString('fr-FR', { dateStyle: 'long' });
     const markdown = `_Généré le ${date}_\n\n${body}`;
@@ -68,7 +69,7 @@ export async function runVeille(mode: RunMode = 'daily'): Promise<void> {
     // Traduction locale uniquement — jamais publiée (output/ est gitignored)
     try {
       console.log('[Veille] Traduction locale…');
-      const translated = await translateDigest(markdown, config.openrouterApiKey, config.openrouterModel);
+      const translated = await translateDigest(markdown, config.openrouterApiKey, config.openrouterModels);
       saveTranslatedDigest(translated, OUTPUT_DIR);
     } catch (err) {
       console.warn('[Veille] Traduction (non bloquant) :', (err as Error).message);
@@ -103,12 +104,12 @@ export async function runVeille(mode: RunMode = 'daily'): Promise<void> {
       }
     }
 
-    appendRunLog({ date: new Date().toISOString(), durationMs: Date.now() - startedAt, model: config.openrouterModel, wikiPage: label, success: true });
+    appendRunLog({ date: new Date().toISOString(), durationMs: Date.now() - startedAt, model: modelUsed, wikiPage: label, success: true });
     console.log('[Veille] Terminé !');
     notifySuccess(filename);
   } catch (err) {
     const error = err instanceof Error ? err : new Error(String(err));
-    appendRunLog({ date: new Date().toISOString(), durationMs: Date.now() - startedAt, model: config.openrouterModel, wikiPage: label, success: false, error: error.message });
+    appendRunLog({ date: new Date().toISOString(), durationMs: Date.now() - startedAt, model: config.openrouterModels.join(','), wikiPage: label, success: false, error: error.message });
     console.error('[Veille] Erreur :', error.message);
     notifyError(error);
     throw error;

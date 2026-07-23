@@ -6,7 +6,15 @@ dotenv.config();
 const ConfigSchema = z.object({
   TAVILY_API_KEY: z.string().min(1, 'TAVILY_API_KEY manquante'),
   OPENROUTER_API_KEY: z.string().min(1, 'OPENROUTER_API_KEY manquante'),
-  OPENROUTER_MODEL: z.string().default('mistralai/mistral-7b-instruct:free'),
+  // Liste de modèles séparés par des virgules, essayés dans l'ordre si 429/502/503.
+  // Toujours terminer par un modèle payant (ex: openai/gpt-4o-mini) — les modèles
+  // gratuits OpenRouter changent/disparaissent régulièrement, un seul modèle fixe
+  // finit toujours par recasser le pipeline.
+  OPENROUTER_MODELS: z
+    .string()
+    .default('google/gemma-4-31b-it:free,openai/gpt-oss-20b:free,nvidia/nemotron-nano-9b-v2:free,openai/gpt-4o-mini'),
+  // Conservé pour compat ascendante (anciens .env) — plus utilisé si OPENROUTER_MODELS est défini.
+  OPENROUTER_MODEL: z.string().optional(),
   GITHUB_TOKEN: z.string().min(1, 'GITHUB_TOKEN manquant'),
   GITHUB_USERNAME: z.string().min(1, 'GITHUB_USERNAME manquant'),
   GITHUB_REPO: z.string().default('sandrine-veille-techno'),
@@ -43,10 +51,19 @@ const googleConfig =
       }
     : null;
 
+// Si OPENROUTER_MODEL (ancien format, un seul modèle) est présent et OPENROUTER_MODELS
+// n'a pas été explicitement fourni, on le met en tête de liste pour ne rien casser.
+const modelList = (
+  process.env['OPENROUTER_MODELS'] ? data.OPENROUTER_MODELS : data.OPENROUTER_MODEL ? data.OPENROUTER_MODEL : data.OPENROUTER_MODELS
+)
+  .split(',')
+  .map((m) => m.trim())
+  .filter(Boolean);
+
 export const config = {
   tavilyApiKey: data.TAVILY_API_KEY,
   openrouterApiKey: data.OPENROUTER_API_KEY,
-  openrouterModel: data.OPENROUTER_MODEL,
+  openrouterModels: modelList,
   githubToken: data.GITHUB_TOKEN,
   githubUsername: data.GITHUB_USERNAME,
   githubRepo: data.GITHUB_REPO,

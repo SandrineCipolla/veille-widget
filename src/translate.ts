@@ -18,16 +18,33 @@ function isRetryable(err: unknown): boolean {
   return status === 429 || status === 502 || status === 503;
 }
 
+function isModelUnavailable(err: unknown): boolean {
+  const status = (err as { status?: number }).status;
+  return status === 404 || isRetryable(err);
+}
+
 /**
  * Prend le digest hebdomadaire et développe les items [EN] en explications
  * françaises détaillées. Sauvegardé localement uniquement, jamais publié.
+ * Essaie chaque modèle de `models` dans l'ordre (même logique de fallback
+ * que generateVeilleMarkdown) — la traduction est déjà non-bloquante côté
+ * pipeline, mais autant profiter du même filet de sécurité.
  */
-export async function translateDigest(digest: string, apiKey: string, model: string): Promise<string> {
-  return withRetry(
-    () => callTranslate(digest, apiKey, model),
-    isRetryable,
-    RETRY_BASE_DELAY_MS,
-  );
+export async function translateDigest(digest: string, apiKey: string, models: string[]): Promise<string> {
+  let lastErr: unknown;
+  for (const model of models) {
+    try {
+      return await withRetry(
+        () => callTranslate(digest, apiKey, model),
+        isRetryable,
+        RETRY_BASE_DELAY_MS,
+      );
+    } catch (err) {
+      lastErr = err;
+      if (!isModelUnavailable(err)) throw err;
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error('Tous les modèles OpenRouter ont échoué (traduction)');
 }
 
 async function callTranslate(digest: string, apiKey: string, model: string): Promise<string> {
@@ -62,7 +79,7 @@ async function callTranslate(digest: string, apiKey: string, model: string): Pro
     if (e.status === 401) throw new Error('OpenRouter : clé API invalide (401)');
     if (e.status === 429)
       throw Object.assign(new Error('OpenRouter : quota dépassé (429)'), { status: 429 });
-    throw new Error(`OpenRouter erreur ${e.status ?? '?'} : ${e.message}`);
+    throw Object.assign(new Error(`OpenRouter erreur ${e.status ?? '?'} : ${e.message}`), { status: e.status });
   }
 
   const content = completion.choices[0]?.message?.content;
