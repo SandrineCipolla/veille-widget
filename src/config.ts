@@ -6,7 +6,7 @@ dotenv.config();
 const ConfigSchema = z.object({
   TAVILY_API_KEY: z.string().min(1, 'TAVILY_API_KEY manquante'),
   OPENROUTER_API_KEY: z.string().min(1, 'OPENROUTER_API_KEY manquante'),
-  // Liste de modèles séparés par des virgules, essayés dans l'ordre si 429/502/503.
+  // Liste de modèles séparés par des virgules, essayés dans l'ordre si 404/429/502/503.
   // Toujours terminer par un modèle payant (ex: openai/gpt-4o-mini) — les modèles
   // gratuits OpenRouter changent/disparaissent régulièrement, un seul modèle fixe
   // finit toujours par recasser le pipeline.

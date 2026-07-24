@@ -47,14 +47,20 @@ _Dernière mise à jour : 24 juillet 2026_
 
 ---
 
-## Corrigé le 24/07/2026 (2e et 3e passes d'audit)
+## Corrigé le 24/07/2026 (2e, 3e et 4e passes d'audit)
 
-- Code mort supprimé : `src/index.ts` (entrée headless systray2, jamais utilisée en prod — `lancer-veille.vbs` lance `npm run electron`), `src/cron.ts`, dépendances `systray2` et `@types/node-cron`
+- Code mort supprimé : `src/index.ts` (entrée headless systray2, jamais utilisée en prod — `lancer-veille.vbs` lance `npm run electron`), `src/cron.ts`, dépendances `systray2` et `@types/node-cron`, `getRecentRuns()` dans `run-logger.ts` (exportée, jamais appelée)
 - Token GitHub exposé en clair dans l'URL git (`https://TOKEN@github.com/...`, visible dans la liste des process) — remplacé par une authentification via header HTTP passé en variable d'env (`GIT_CONFIG_COUNT`/`GIT_CONFIG_KEY_0`/`GIT_CONFIG_VALUE_0`)
 - Ternaire redondant dans `config.ts` pour la résolution `OPENROUTER_MODEL`/`OPENROUTER_MODELS`
 - Champs `cronDaily`/`cronWeekly` morts dans `config.ts` (plus lus depuis la suppression de `cron.ts`)
 - `CRON_SCHEDULE` supprimé du `.env` local (mort, jamais lu par aucun code)
 - `scripts/test-pipeline.ts` utilisait l'ancienne API OpenRouter (`config.openrouterModel` singulier, anciennes signatures de fonctions) et plantait dès la première étape — invisible car `scripts/` était exclu de `tsconfig.json`. Corrigé + `include` élargi pour attraper ce genre de dérive à l'avenir (voir [PR #15](https://github.com/SandrineCipolla/veille-widget/pull/15))
+- Badge README "License: MIT" incohérent avec le fichier `LICENSE` réel ("Tous droits réservés") — badge corrigé pour refléter la licence propriétaire réelle
+- README faux sur la fenêtre Tavily en mode weekly ("2 derniers jours" — en réalité les fenêtres par défaut 7j EN/14j FR, le raccourci 2j ne s'applique qu'au daily)
+- Cache `actions/cache` du workflow (permet au récap du vendredi de relire les digests lun-jeu malgré des runners éphémères) documenté dans le README
+- Démarrage automatique Windows (`lancer-veille.vbs`) documenté dans le README (était seulement ici)
+- Texte généré sur le wiki public corrigé : `github-wiki.ts` écrivait "Daily (lundi → jeudi)" dans `Home.md` à chaque run alors que le daily tourne aussi le vendredi depuis le fix du workflow
+- Commentaires `config.ts`/`.env.example` complétés (404 manquant dans la liste des codes de fallback), liste de modèles d'exemple réalignée entre README et `.env.example`
 
 ## Ce qu'on souhaite faire
 
