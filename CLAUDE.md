@@ -19,7 +19,7 @@ Développeuse : fullstack TS/Node, formation RNCP 7 INGETIS.
 
 ### Architecture
 - Un fichier = une responsabilité (SRP strict)
-- Pas de logique métier dans `index.ts` — il orchestre uniquement
+- Pas de logique métier dans `run-once.ts` / `electron/main.cjs` — ils orchestrent uniquement
 - Chaque module exporte une fonction principale typée
 - Pas d'état global mutable
 
@@ -58,8 +58,7 @@ veille-widget/
 │   └── workflows/
 │       └── veille.yml        # pipeline cloud — quotidien (lun-ven) + hebdo (ven)
 ├── src/
-│   ├── index.ts              # entrée headless (systray2) — legacy, superseded par electron/
-│   ├── run-once.ts           # entrée CLI utilisée par le workflow (--mode=daily|weekly)
+│   ├── run-once.ts           # entrée CLI utilisée par le workflow cloud et le widget (--mode=daily|weekly)
 │   ├── config.ts             # chargement et validation des variables d'env (zod)
 │   ├── pipeline.ts           # orchestration du run (runVeille)
 │   ├── tavily-client.ts      # recherche web multi-topics via Tavily
@@ -69,7 +68,6 @@ veille-widget/
 │   ├── drive-client.ts       # upload optionnel vers Google Drive
 │   ├── discord-client.ts     # webhook Discord + extraction des incontournables
 │   ├── notifier.ts           # notification Windows native
-│   ├── cron.ts               # déclenchement planifié (utilisé par src/index.ts)
 │   ├── output.ts             # sauvegarde locale, labels de run, HTML de traduction
 │   ├── run-logger.ts         # log JSON des runs (logs/pipeline.json)
 │   ├── retry.ts              # utilitaire retry avec backoff exponentiel
@@ -87,8 +85,7 @@ veille-widget/
 
 ## Dépendances autorisées
 - `electron` — widget desktop (fenêtre + systray natif)
-- `node-cron` — cron optionnel, local (`src/cron.ts`) et widget (`electron/main.cjs`)
-- `systray2` — icône systray de l'entrée headless legacy (`src/index.ts`), pas utilisée par le widget Electron
+- `node-cron` — cron local optionnel dans le widget (`electron/main.cjs`), désactivé par défaut
 - `node-notifier` — notifications Windows natives
 - `@tavily/core` — recherche web
 - `openai` — client OpenRouter compatible ; liste de modèles avec fallback ordonné via `OPENROUTER_MODELS`

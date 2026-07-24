@@ -38,22 +38,27 @@ _Dernière mise à jour : 24 juillet 2026_
 
 ## Limites connues
 
-- Deux entrées possibles dans le code (`src/index.ts` headless + systray2, et `electron/main.cjs`) — la seconde est celle réellement utilisée, la première est un vestige pré-Electron non retiré (dette technique, pas un bug)
 - `electron/main.cjs` relit `.env` à la main (parsing par split de ligne) en parallèle de la validation stricte Zod de `src/config.ts` — deux sources de vérité pour la même config
 - La logique de fallback multi-modèles est dupliquée entre `openrouter-client.ts` et `translate.ts`
-- La règle "vendredi ⇒ weekly" est dupliquée à 3 endroits (`src/index.ts`, `electron/main.cjs` ×2)
+- La règle "vendredi ⇒ weekly" est dupliquée entre `electron/main.cjs` (2 endroits) et le workflow GitHub Actions
 - Google Drive tokens expirent après 7 jours en mode "testing" (fix : publier l'app dans Google Cloud Console)
 - `CRON_SCHEDULE` dans `.env` n'est lu par aucun code — variable morte à supprimer
 
 ---
 
+## Corrigé le 24/07/2026 (2e passe d'audit)
+
+- Code mort supprimé : `src/index.ts` (entrée headless systray2, jamais utilisée en prod — `lancer-veille.vbs` lance `npm run electron`), `src/cron.ts`, dépendances `systray2` et `@types/node-cron`
+- Token GitHub exposé en clair dans l'URL git (`https://TOKEN@github.com/...`, visible dans la liste des process) — remplacé par une authentification via header HTTP passé en variable d'env (`GIT_CONFIG_COUNT`/`GIT_CONFIG_KEY_0`/`GIT_CONFIG_VALUE_0`)
+- Ternaire redondant dans `config.ts` pour la résolution `OPENROUTER_MODEL`/`OPENROUTER_MODELS`
+- Champs `cronDaily`/`cronWeekly` morts dans `config.ts` (plus lus depuis la suppression de `cron.ts`)
+
 ## Ce qu'on souhaite faire
 
-### Nettoyage technique (priorité basse, pas bloquant)
+### Nettoyage technique restant (priorité basse, pas bloquant)
 - Factoriser la logique de fallback multi-modèles entre `openrouter-client.ts` et `translate.ts`
 - Unifier la lecture de config entre `electron/main.cjs` et `src/config.ts`
-- Centraliser la règle "vendredi ⇒ weekly" dans une fonction partagée
-- Supprimer `CRON_SCHEDULE` (mort) et le ternaire redondant dans `config.ts`
+- Supprimer `CRON_SCHEDULE` (mort dans `.env`)
 
 ### Feature : impact sur mes projets (n8n)
 Utiliser n8n pour analyser chaque digest hebdomadaire et générer une section `## 🎯 Impact sur mes projets` — en comparant les news tech avec le contexte de StockHub et veille-widget.

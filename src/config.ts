@@ -25,11 +25,6 @@ const ConfigSchema = z.object({
   GOOGLE_DRIVE_FOLDER_ID: z.string().optional(),
   // Discord — optionnel, envoi désactivé si absent
   DISCORD_WEBHOOK_URL: z.preprocess(v => v || undefined, z.string().url().optional()),
-  // Cron — optionnel, déclenchement automatique désactivé si absent
-  // CRON_DAILY : lundi→jeudi (ex: "0 8 * * 1-4")
-  // CRON_WEEKLY : vendredi récap (ex: "0 8 * * 5")
-  CRON_DAILY: z.string().optional(),
-  CRON_WEEKLY: z.string().optional(),
 });
 
 const result = ConfigSchema.safeParse(process.env);
@@ -53,9 +48,8 @@ const googleConfig =
 
 // Si OPENROUTER_MODEL (ancien format, un seul modèle) est présent et OPENROUTER_MODELS
 // n'a pas été explicitement fourni, on le met en tête de liste pour ne rien casser.
-const modelList = (
-  process.env['OPENROUTER_MODELS'] ? data.OPENROUTER_MODELS : data.OPENROUTER_MODEL ? data.OPENROUTER_MODEL : data.OPENROUTER_MODELS
-)
+const legacyModelOnly = data.OPENROUTER_MODEL && !process.env['OPENROUTER_MODELS'];
+const modelList = (legacyModelOnly ? data.OPENROUTER_MODEL! : data.OPENROUTER_MODELS)
   .split(',')
   .map((m) => m.trim())
   .filter(Boolean);
@@ -69,6 +63,4 @@ export const config = {
   githubRepo: data.GITHUB_REPO,
   google: googleConfig,
   discordWebhookUrl: data.DISCORD_WEBHOOK_URL,
-  cronDaily: data.CRON_DAILY,
-  cronWeekly: data.CRON_WEEKLY,
 } as const;

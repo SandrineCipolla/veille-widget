@@ -200,19 +200,17 @@ npm test
 └── workflows/
     └── veille.yml         # pipeline cloud — quotidien (lun-ven) + hebdo (ven)
 src/
-├── index.ts              # orchestration systray (headless)
 ├── config.ts             # validation .env (zod)
 ├── pipeline.ts           # pipeline principal (RunMode daily/weekly)
 ├── tavily-client.ts      # 9 topics EN+FR en parallèle
-├── openrouter-client.ts  # appel LLM avec retry x3
+├── openrouter-client.ts  # appel LLM, fallback multi-modèles ordonné
 ├── github-wiki.ts        # push wiki via simple-git
 ├── drive-client.ts       # upload Google Drive OAuth2
 ├── discord-client.ts     # webhook + extractIncontournables
 ├── translate.ts          # traduction locale EN→FR
 ├── output.ts             # sauvegarde, labels, HTML traduction
-├── cron.ts               # déclenchement planifié
 ├── notifier.ts           # notification Windows native
-├── run-once.ts           # entrée CLI (--mode=daily|weekly)
+├── run-once.ts           # entrée CLI (--mode=daily|weekly), utilisée par le workflow cloud et le widget
 ├── retry.ts              # backoff exponentiel partagé
 ├── types.ts              # interfaces et RunMode
 └── __tests__/            # tests unitaires (vitest)
