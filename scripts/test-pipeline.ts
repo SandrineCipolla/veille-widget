@@ -65,10 +65,10 @@ if (mode === 'weekly') {
   }
 }
 
-console.log(`[2/3] Rédaction OpenRouter (${config.openrouterModel})…`);
+console.log(`[2/3] Rédaction OpenRouter (${config.openrouterModels.join(' → ')})…`);
 const t1 = Date.now();
-const body = await generateVeilleMarkdown(config.openrouterApiKey, config.openrouterModel, prompt, searchInput);
-console.log(`✓ OpenRouter : ${body.length} caractères en ${Date.now() - t1} ms`);
+const { content: body, modelUsed } = await generateVeilleMarkdown(config.openrouterApiKey, config.openrouterModels, prompt, searchInput);
+console.log(`✓ OpenRouter : ${body.length} caractères en ${Date.now() - t1} ms (modèle : ${modelUsed})`);
 
 const label = getRunLabel(mode);
 const date = new Date().toLocaleDateString('fr-FR', { dateStyle: 'long' });
@@ -83,7 +83,7 @@ console.log(`✓ Sauvegardé : ${filepath}`);
 console.log('\n[4b] Traduction locale (articles [EN])…');
 const t1b = Date.now();
 try {
-  const translated = await translateDigest(markdown, config.openrouterApiKey, config.openrouterModel);
+  const translated = await translateDigest(markdown, config.openrouterApiKey, config.openrouterModels);
   saveTranslatedDigest(translated, OUTPUT_DIR);
   console.log(`✓ Traduit : output/latest-traduit.html (${Date.now() - t1b} ms)`);
 } catch (err) {
@@ -133,7 +133,7 @@ if (SKIP_DISCORD || !config.discordWebhookUrl) {
 appendRunLog({
   date: new Date().toISOString(),
   durationMs: Date.now() - t0,
-  model: config.openrouterModel,
+  model: modelUsed,
   wikiPage: label,
   success: true,
 });
