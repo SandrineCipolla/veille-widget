@@ -100,7 +100,7 @@ function buildHomeContent(wikiFiles: string[], currentLabel: string): string {
 
   return `# 📡 Veille Technologique — Sandrine Cipolla
 
-> Archive de veille technologique automatisée — générée quotidiennement (lun-jeu) et récapitulée chaque vendredi.
+> Archive de veille technologique automatisée — générée quotidiennement (lun-ven) et récapitulée chaque vendredi.
 
 Développée dans le cadre du **RNCP 7 "Expert en Architecture et Développement Logiciel"** (Ingétis, soutenance mars 2027) — preuve de la compétence **C1.2 Veille technologique**, Bloc 1.
 
@@ -114,7 +114,7 @@ ${sections}
 
 ## 🗓️ Format
 
-**Daily (lundi → jeudi)** — digest court sur les 2 derniers jours :
+**Daily (lundi → vendredi)** — digest court sur les 2 derniers jours :
 - 🔥 À retenir aujourd'hui
 - 🔒 Sécurité (si alerte critique)
 - 📦 Release (si release majeure)

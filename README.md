@@ -3,7 +3,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-22+-green)](https://nodejs.org/)
 [![Electron](https://img.shields.io/badge/Electron-42-47848f)](https://www.electronjs.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![License](https://img.shields.io/badge/License-Tous%20droits%20réservés-lightgrey.svg)](./LICENSE)
 
 > Widget bureau Windows automatisant une veille technologique quotidienne et hebdomadaire personnalisée.
 
@@ -42,10 +42,17 @@ il enchaîne les **deux** modes à la suite (daily puis weekly) — les autres j
 
 ### Weekly récap — vendredi (en plus du daily)
 
-- Tavily : 2 derniers jours (nouveautés du vendredi)
+- Tavily : fenêtres par défaut par topic (7j EN / 14j FR), pas le raccourci 2 jours du daily
 - Entrée LLM : digests lun-jeu + nouveautés du vendredi
 - Prompt : `veille-recap.txt` — synthèse de la semaine, sujets récurrents, incontournables
 - Wiki page : `YYYY-Www`
+
+**Comment le récap du vendredi relit les digests lun-jeu malgré des runners GitHub
+Actions éphémères** (chaque run repart d'une machine vierge) : le workflow utilise
+`actions/cache` sur `output/` avec une clé par semaine ISO (`output-{semaine}-{run}`,
+`restore-keys: output-{semaine}-`). Chaque run de la semaine restaure le cache du run
+précédent, y écrit son propre digest, et le sauvegarde sous une nouvelle clé — le
+vendredi hérite ainsi des fichiers `output/YYYY-MM-DD.md` de lundi à jeudi.
 
 ---
 
@@ -141,7 +148,7 @@ TAVILY_API_KEY=tvly-...
 OPENROUTER_API_KEY=sk-or-...
 # Liste essayée dans l'ordre, bascule sur le suivant si 404/429/502/503.
 # Termine toujours par un modèle payant (les gratuits OpenRouter changent souvent) :
-OPENROUTER_MODELS=google/gemma-4-31b-it:free,openai/gpt-oss-20b:free,openai/gpt-4o-mini
+OPENROUTER_MODELS=google/gemma-4-31b-it:free,openai/gpt-oss-20b:free,nvidia/nemotron-nano-9b-v2:free,openai/gpt-4o-mini
 GITHUB_TOKEN=ghp_...           # classic PAT, scope repo
 GITHUB_USERNAME=MonPseudo
 GITHUB_REPO=mon-repo-contenu   # repo dédié au contenu wiki
@@ -190,6 +197,12 @@ npx tsx scripts/auth-google.ts
 # Tests unitaires (vitest)
 npm test
 ```
+
+### Démarrage automatique (Windows)
+
+`lancer-veille.vbs` lance le widget sans fenêtre de terminal visible (`npm run electron`
+en arrière-plan). Pour un lancement automatique à la connexion Windows, placer un
+raccourci vers ce fichier dans le dossier de démarrage (`Win+R` → `shell:startup`).
 
 ---
 

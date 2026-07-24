@@ -22,12 +22,3 @@ export function appendRunLog(entry: RunLogEntry): void {
 
   fs.writeFileSync(LOG_PATH, JSON.stringify(entries, null, 2), 'utf-8');
 }
-
-/**
- * Retourne les N derniers runs pour affichage (README, UI).
- */
-export function getRecentRuns(n = 5): RunLogEntry[] {
-  if (!fs.existsSync(LOG_PATH)) return [];
-  const entries = JSON.parse(fs.readFileSync(LOG_PATH, 'utf-8')) as RunLogEntry[];
-  return entries.slice(0, n);
-}
