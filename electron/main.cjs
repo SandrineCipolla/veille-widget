@@ -238,10 +238,18 @@ function runPipeline(mode = 'daily') {
   });
 }
 
+const WIKI_POLL_INTERVAL_MS = 15 * 60 * 1000;
+
 app.whenReady().then(() => {
   createWindow();
   createTray();
   win.webContents.once('did-finish-load', () => pushContent());
+
+  // Le pipeline cloud peut publier sur le wiki à tout moment (PC éteint ou non) —
+  // on revérifie périodiquement plutôt que seulement au lancement de l'app.
+  setInterval(() => {
+    if (!pipelineRunning) pushContent();
+  }, WIKI_POLL_INTERVAL_MS);
 
   const cronDaily = loadEnvValue('CRON_DAILY');
   if (cronDaily && cron.validate(cronDaily)) {
