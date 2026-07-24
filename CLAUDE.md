@@ -1,8 +1,12 @@
 # CLAUDE.md — Instructions pour ce projet
 
 ## Contexte
-Widget bureau Windows de veille technologique automatisée.
-Stack : TypeScript strict, Node.js 20+, tsx (pas de build step).
+Widget bureau Windows (Electron) de veille technologique automatisée.
+Pipeline de génération en TypeScript strict, Node.js 20+, tsx (pas de build step).
+Le run automatique (quotidien lun-ven + récap hebdo vendredi) est piloté par
+GitHub Actions (`.github/workflows/veille.yml`) — c'est la source de vérité,
+fiable même PC éteint. Le widget local sert de visualisation (relit le wiki
+au démarrage + toutes les 15 min) et de déclenchement manuel optionnel.
 Développeuse : fullstack TS/Node, formation RNCP 7 INGETIS.
 
 ## Règles générales
@@ -50,31 +54,50 @@ veille-widget/
 ├── .env.example
 ├── package.json
 ├── tsconfig.json
+├── .github/
+│   └── workflows/
+│       └── veille.yml        # pipeline cloud — quotidien (lun-ven) + hebdo (ven)
 ├── src/
-│   ├── index.ts              # point d'entrée — orchestration uniquement
-│   ├── config.ts             # chargement et validation des variables d'env
+│   ├── index.ts              # entrée headless (systray2) — legacy, superseded par electron/
+│   ├── run-once.ts           # entrée CLI utilisée par le workflow (--mode=daily|weekly)
+│   ├── config.ts             # chargement et validation des variables d'env (zod)
+│   ├── pipeline.ts           # orchestration du run (runVeille)
 │   ├── tavily-client.ts      # recherche web multi-topics via Tavily
-│   ├── openrouter-client.ts  # rédaction structurée via OpenRouter (mistral-7b)
+│   ├── openrouter-client.ts  # rédaction structurée via OpenRouter, fallback multi-modèles
+│   ├── translate.ts          # traduction locale EN→FR, même logique de fallback
 │   ├── github-wiki.ts        # push vers le wiki GitHub via simple-git
 │   ├── drive-client.ts       # upload optionnel vers Google Drive
+│   ├── discord-client.ts     # webhook Discord + extraction des incontournables
 │   ├── notifier.ts           # notification Windows native
+│   ├── cron.ts               # déclenchement planifié (utilisé par src/index.ts)
+│   ├── output.ts             # sauvegarde locale, labels de run, HTML de traduction
+│   ├── run-logger.ts         # log JSON des runs (logs/pipeline.json)
 │   ├── retry.ts              # utilitaire retry avec backoff exponentiel
-│   └── types.ts              # interfaces et types partagés
+│   ├── types.ts              # interfaces et types partagés
+│   └── __tests__/            # tests unitaires (vitest)
+├── electron/
+│   ├── main.cjs               # process principal du widget (CJS)
+│   ├── preload.cjs            # bridge IPC contextIsolation
+│   └── renderer/index.html    # UI du widget
 ├── prompts/
-│   └── veille-hebdo.txt      # prompt de veille (source of truth)
+│   ├── veille-quotidienne.txt
+│   └── veille-recap.txt
 └── output/                   # fichiers Markdown générés (gitignored)
 ```
 
 ## Dépendances autorisées
-- `systray2` — icône systray Windows (fork maintenu de node-systray)
+- `electron` — widget desktop (fenêtre + systray natif)
+- `node-cron` — cron optionnel, local (`src/cron.ts`) et widget (`electron/main.cjs`)
+- `systray2` — icône systray de l'entrée headless legacy (`src/index.ts`), pas utilisée par le widget Electron
 - `node-notifier` — notifications Windows natives
 - `@tavily/core` — recherche web
-- `openai` — client OpenRouter compatible (modèle configurable via OPENROUTER_MODEL)
+- `openai` — client OpenRouter compatible ; liste de modèles avec fallback ordonné via `OPENROUTER_MODELS`
 - `simple-git` — push vers le wiki GitHub (le Git Data API GitHub ne supporte pas les repos wiki)
 - `googleapis` — upload Google Drive optionnel (OAuth2, configuré via scripts/auth-google.ts)
 - `zod` — validation des schémas
 - `dotenv` — chargement .env
 - `tsx` — exécution TypeScript sans build
+- `vitest` — tests unitaires
 
 ## Git
 
@@ -87,5 +110,4 @@ veille-widget/
 ## Ce qu'on ne fait pas
 - Pas de framework web (Express, Fastify) — c'est un script, pas un serveur
 - Pas de base de données — le wiki GitHub EST le stockage
-- Pas de tests pour le MVP, mais le code doit être testable (fonctions pures isolées)
 - Pas de bundler (webpack, esbuild) — tsx suffit

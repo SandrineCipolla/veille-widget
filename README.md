@@ -15,27 +15,32 @@ Développé dans le cadre du RNCP 7 "Expert en Architecture et Développement Lo
 
 ## ✨ Fonctionnalités principales
 
-- ⚡ **Widget Electron** — fenêtre flottante + icône systray, toujours accessible
-- 🗓️ **Deux modes** — veille daily (lun-jeu) et récap hebdomadaire (vendredi)
+- ☁️ **GitHub Actions** — pipeline cloud, source de vérité : run quotidien (lun-ven) + récap hebdo le vendredi, indépendant du PC
+- ⚡ **Widget Electron** — fenêtre flottante + icône systray ; lit le dernier digest sur le wiki au démarrage et se resynchronise toutes les 15 min
+- 🔁 **Fallback multi-modèles** — `OPENROUTER_MODELS` essaie plusieurs modèles OpenRouter dans l'ordre (bascule sur 404/429/502/503)
+- 🗓️ **Deux modes** — veille daily (lun-ven) et récap hebdomadaire (vendredi)
 - 🌍 **Sources EN + FR** — 6 topics internationaux + 3 sources officielles françaises (CERT-FR, CNIL, developpez.com)
 - 🤖 **Rédaction IA** — OpenRouter synthétise les résultats en digest Markdown structuré
 - 📝 **Wiki GitHub** — archivage automatique par date (`YYYY-MM-DD`) ou semaine ISO (`YYYY-Www`)
 - 🇫🇷 **Traduction HTML locale** — version française privée, ouverte dans le navigateur (jamais publiée)
 - ☁️ **Google Drive** — backup optionnel (OAuth2, app publiée)
 - 🔔 **Discord** — notification des incontournables (optionnel)
-- ⏰ **Cron** — déclenchement automatique configurable
+- ⏰ **Cron local** — déclenchement optionnel en plus du cloud (désactivé par défaut)
 
 ---
 
 ## 🗓️ Modes de veille
 
-### Daily — lundi → jeudi
+Le workflow cloud (`.github/workflows/veille.yml`) tourne lundi → vendredi. Le vendredi,
+il enchaîne les **deux** modes à la suite (daily puis weekly) — les autres jours, daily seul.
+
+### Daily — lundi → vendredi
 
 - Tavily : 2 derniers jours (topics FR gardent 14 jours)
 - Prompt : `veille-quotidienne.txt` — digest court, focalisé sur le nouveau
 - Wiki page : `YYYY-MM-DD`
 
-### Weekly récap — vendredi
+### Weekly récap — vendredi (en plus du daily)
 
 - Tavily : 2 derniers jours (nouveautés du vendredi)
 - Entrée LLM : digests lun-jeu + nouveautés du vendredi
@@ -46,10 +51,13 @@ Développé dans le cadre du RNCP 7 "Expert en Architecture et Développement Lo
 
 ## 🔄 Pipeline
 
+Déclencheurs possibles — le cloud est la source de vérité, fiable même PC éteint :
+
 ```
-[Widget Electron] ──── clic "Lancer la veille" ────┐
-[node-cron]       ── CRON_DAILY / CRON_WEEKLY ──────┤
-                                                    ▼
+[GitHub Actions]  ── cron 30 7 * * 1-5 (9h30 Paris) ──┐  ← source de vérité, tourne même PC éteint
+[Widget Electron] ── clic "Lancer la veille" ─────────┤
+[node-cron local] ── CRON_DAILY / CRON_WEEKLY ────────┤  ← optionnel, désactivé par défaut
+                                                       ▼
                                ┌─────────────────────────────────────┐
                                │  Tavily — 9 topics × 3 résultats    │
                                │  6 topics EN (7j)                   │
@@ -60,7 +68,10 @@ Développé dans le cadre du RNCP 7 "Expert en Architecture et Développement Lo
                     Lecture digests lun-jeu       │
                                                  ▼
                                ┌─────────────────────────────────────┐
-                               │  OpenRouter LLM                     │
+                               │  OpenRouter LLM (fallback ordonné)  │
+                               │  OPENROUTER_MODELS : model1,        │
+                               │  model2… → bascule sur 404/429/     │
+                               │  502/503                            │
                                │  veille-quotidienne.txt (daily)     │
                                │  veille-recap.txt (weekly)          │
                                │  → Markdown structuré               │
@@ -72,12 +83,14 @@ Développé dans le cadre du RNCP 7 "Expert en Architecture et Développement Lo
                │  GitHub Wiki     │                │  Traduction FR       │
                │  YYYY-MM-DD.md   │                │  latest-traduit.html │
                │  ou YYYY-Www.md  │                │  (local, privé)      │
-               └────────┬─────────┘                └──────────────────────┘
+               │  + Home.md       │                └──────────────────────┘
+               └────────┬─────────┘
                         │
-               ┌────────┴────────┐
-               ▼                 ▼
-        Google Drive         Discord
-        (optionnel)          (optionnel)
+        ┌───────────────┼───────────────────┐
+        ▼               ▼                    ▼
+  Google Drive       Discord         [Widget Electron]
+  (optionnel)        (optionnel)     relit Home.md → dernier digest
+                                     au démarrage + toutes les 15 min
 ```
 
 ---
@@ -89,7 +102,8 @@ Développé dans le cadre du RNCP 7 "Expert en Architecture et Développement Lo
 | Widget UI | Electron 42 |
 | Runtime | Node.js 22, TypeScript strict, `tsx` |
 | Recherche web | `@tavily/core` |
-| LLM | OpenRouter — modèle configurable via `OPENROUTER_MODEL` |
+| LLM | OpenRouter — liste de modèles avec fallback ordonné via `OPENROUTER_MODELS` |
+| Automatisation cloud | GitHub Actions — `.github/workflows/veille.yml` |
 | Stockage | GitHub Wiki via `simple-git` |
 | Cloud backup | Google Drive via `googleapis` (OAuth2) |
 | Notifications | `node-notifier` |
@@ -125,14 +139,19 @@ cp .env.example .env
 ```env
 TAVILY_API_KEY=tvly-...
 OPENROUTER_API_KEY=sk-or-...
-OPENROUTER_MODEL=google/gemma-4-31b-it:free
+# Liste essayée dans l'ordre, bascule sur le suivant si 404/429/502/503.
+# Termine toujours par un modèle payant (les gratuits OpenRouter changent souvent) :
+OPENROUTER_MODELS=google/gemma-4-31b-it:free,openai/gpt-oss-20b:free,openai/gpt-4o-mini
 GITHUB_TOKEN=ghp_...           # classic PAT, scope repo
 GITHUB_USERNAME=MonPseudo
 GITHUB_REPO=mon-repo-contenu   # repo dédié au contenu wiki
 
-# Cron — désactivé si absent
-CRON_DAILY=0 8 * * 1-4         # lundi → jeudi 8h
-CRON_WEEKLY=0 8 * * 5          # vendredi 8h (récap)
+# Cron local — optionnel, désactivé si absent. Le run automatique (quotidien +
+# hebdo vendredi) est normalement géré par GitHub Actions (cloud, fiable même
+# PC éteint) ; le widget lit alors le wiki au démarrage. N'active ces variables
+# que pour un run automatique en plus, en local.
+# CRON_DAILY=0 8 * * 1-4         # lundi → jeudi 8h
+# CRON_WEEKLY=0 8 * * 5          # vendredi 8h (récap)
 
 # Google Drive — optionnel (voir scripts/auth-google.ts)
 GOOGLE_CLIENT_ID=
@@ -140,9 +159,18 @@ GOOGLE_CLIENT_SECRET=
 GOOGLE_REFRESH_TOKEN=
 GOOGLE_DRIVE_FOLDER_ID=
 
-# Discord — optionnel
+# Discord — optionnel (aussi à configurer comme secret GitHub Actions
+# DISCORD_WEBHOOK_URL pour recevoir les notifs des runs cloud)
 DISCORD_WEBHOOK_URL=
 ```
+
+### Secrets GitHub Actions (pipeline cloud)
+
+Le workflow `.github/workflows/veille.yml` lit sa config depuis les secrets du repo
+(Settings → Secrets and variables → Actions), pas depuis `.env` :
+
+`TAVILY_API_KEY`, `OPENROUTER_API_KEY`, `OPENROUTER_MODELS`, `GH_PAT`, `WIKI_USERNAME`,
+`WIKI_REPO`, `DISCORD_WEBHOOK_URL` (optionnel).
 
 ---
 
@@ -158,6 +186,9 @@ npx tsx scripts/test-pipeline.ts --mode=weekly --skip-github --skip-drive --skip
 
 # Authentification Google Drive (one-shot)
 npx tsx scripts/auth-google.ts
+
+# Tests unitaires (vitest)
+npm test
 ```
 
 ---
@@ -165,6 +196,9 @@ npx tsx scripts/auth-google.ts
 ## 📁 Structure
 
 ```
+.github/
+└── workflows/
+    └── veille.yml         # pipeline cloud — quotidien (lun-ven) + hebdo (ven)
 src/
 ├── index.ts              # orchestration systray (headless)
 ├── config.ts             # validation .env (zod)
@@ -180,7 +214,8 @@ src/
 ├── notifier.ts           # notification Windows native
 ├── run-once.ts           # entrée CLI (--mode=daily|weekly)
 ├── retry.ts              # backoff exponentiel partagé
-└── types.ts              # interfaces et RunMode
+├── types.ts              # interfaces et RunMode
+└── __tests__/            # tests unitaires (vitest)
 electron/
 ├── main.cjs              # process principal Electron (CJS)
 ├── preload.cjs           # bridge IPC contextIsolation

@@ -1,32 +1,13 @@
 # Roadmap soutenance — features prioritaires
 
-## 1. README + schéma pipeline
-**Branche :** `docs/readme-pipeline`
-**Impact :** présentation du projet pour le jury, Bloc 1
-**Contenu :**
-- Description du projet et de la stack
-- Schéma ASCII ou Mermaid du pipeline complet
-- Captures Discord et wiki
-- Instructions de lancement
+_Mise à jour 24/07/2026 : les items 1 à 4 ci-dessous (README + schéma pipeline, log des
+runs, tests unitaires, widget Electron) sont faits — voir [README.md](../README.md) et
+[ETAT-PROJET.md](../ETAT-PROJET.md) pour l'état réel. Ne reste que le nettoyage
+technique et la feature n8n, listés dans ETAT-PROJET.md § "Ce qu'on souhaite faire".
 
-## 2. Log des runs
-**Branche :** `feat/run-logger`
-**Impact :** trace documentée de la veille dans le temps, Bloc 1 C1.2
-**Contenu :**
-- `logs/pipeline.json` — un objet par run : date, durée, modèle, succès/erreur
-- Affiché dans le README (derniers runs)
+## Packaging MSIX (Microsoft Store)
+Reste à faire — le widget Electron existe et tourne, mais n'est pas packagé.
+**Impact :** distribution/démo soutenance, Bloc 3.
 
-## 3. Tests unitaires
-**Branche :** `feat/unit-tests`
-**Impact :** crédibilité technique, Bloc 2
-**Fonctions ciblées :**
-- `extractIncontournables`
-- `getWeekLabel`
-- `formatDiscordMessage`
-
-## 4. Electron widget
-**Branche :** `feat/electron-widget`
-**Impact :** démo visuelle pour la soutenance, Bloc 3
-**Contenu :**
-- Fenêtre bureau affichant les 🔥 Incontournables
-- Packaging MSIX (objectif Microsoft Store)
+## Feature n8n — impact sur mes projets
+Voir [ETAT-PROJET.md](../ETAT-PROJET.md#feature--impact-sur-mes-projets-n8n) pour le détail.
