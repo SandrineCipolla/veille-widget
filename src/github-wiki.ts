@@ -19,19 +19,30 @@ export async function pushToWiki(
   content: string,
 ): Promise<WikiPushResult> {
   const filename = `${label}.md`;
-  const wikiUrl = `https://${token}@github.com/${owner}/${repo}.wiki.git`;
+  const wikiUrl = `https://github.com/${owner}/${repo}.wiki.git`;
   const tmpDir = path.join(os.tmpdir(), `veille-wiki-${Date.now()}`);
+
+  // Authentification via header HTTP passé en variable d'env plutôt qu'embarqué
+  // dans l'URL — évite que le token apparaisse dans la liste des process (ps /
+  // Gestionnaire des tâches) ou dans un message d'erreur git non intercepté.
+  const authHeader = `AUTHORIZATION: basic ${Buffer.from(`x-access-token:${token}`).toString('base64')}`;
+  const gitEnv = {
+    GIT_CONFIG_COUNT: '1',
+    GIT_CONFIG_KEY_0: 'http.extraheader',
+    GIT_CONFIG_VALUE_0: authHeader,
+  };
+  const gitOptions = { unsafe: { allowUnsafeConfigEnvCount: true } };
 
   try {
     console.log('[wiki] Clone du wiki…');
-    await simpleGit().clone(wikiUrl, tmpDir);
+    await simpleGit(gitOptions).env(gitEnv).clone(wikiUrl, tmpDir);
 
     fs.writeFileSync(path.join(tmpDir, filename), content, 'utf-8');
 
     const existingFiles = fs.readdirSync(tmpDir).filter(f => f.endsWith('.md'));
     fs.writeFileSync(path.join(tmpDir, 'Home.md'), buildHomeContent(existingFiles, label), 'utf-8');
 
-    const git = simpleGit(tmpDir);
+    const git = simpleGit(tmpDir, gitOptions).env(gitEnv);
     await git.addConfig('user.email', 'veille-widget@noreply');
     await git.addConfig('user.name', 'Veille Widget');
     await git.add([filename, 'Home.md']);
