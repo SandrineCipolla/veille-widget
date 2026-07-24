@@ -30,12 +30,24 @@ jobs:
           restore-keys: |
             output-${{ env.WEEK_KEY }}-
 
-      - name: Lancer la veille
-        run: |
-          DAY=$(date +%u)
-          if [ "$DAY" = "5" ]; then MODE="weekly"; else MODE="daily"; fi
-          echo "Mode : $MODE (jour $DAY)"
-          npx tsx src/run-once.ts --mode=$MODE
+      - name: Lancer la veille quotidienne
+        run: npx tsx src/run-once.ts --mode=daily
+        env:
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODELS: ${{ secrets.OPENROUTER_MODELS }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          GITHUB_USERNAME: ${{ secrets.WIKI_USERNAME }}
+          GITHUB_REPO: ${{ secrets.WIKI_REPO }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Déterminer si récap hebdo (vendredi)
+        id: day
+        run: echo "is_friday=$([ "$(date +%u)" = "5" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Lancer le récap hebdo (vendredi uniquement)
+        if: steps.day.outputs.is_friday == 'true'
+        run: npx tsx src/run-once.ts --mode=weekly
         env:
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}

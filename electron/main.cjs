@@ -6,6 +6,7 @@ const fs = require('fs');
 const zlib = require('zlib');
 const { spawn } = require('child_process');
 const cron = require('node-cron');
+const https = require('https');
 
 // ── Génération de l'icône PNG (cercle orange sur fond transparent) ──────────
 function crc32(buf) {
@@ -67,6 +68,37 @@ function loadEnvValue(key) {
 const GITHUB_OWNER = loadEnvValue('GITHUB_USERNAME');
 const GITHUB_REPO  = loadEnvValue('GITHUB_REPO') || 'sandrine-veille-techno';
 console.log('[Widget] GitHub owner:', GITHUB_OWNER, '| repo:', GITHUB_REPO);
+
+// ── Lecture du dernier digest depuis le wiki GitHub (source de vérité, alimentée
+// par le pipeline cloud même quand ce PC est éteint) ─────────────────────────
+function fetchRaw(wikiPage, timeoutMs = 6000) {
+  return new Promise((resolve, reject) => {
+    const url = `https://raw.githubusercontent.com/wiki/${GITHUB_OWNER}/${GITHUB_REPO}/${wikiPage}`;
+    const req = https.get(url, { headers: { 'User-Agent': 'veille-widget' } }, (res) => {
+      if (res.statusCode !== 200) {
+        res.resume();
+        reject(new Error(`GET ${wikiPage} → HTTP ${res.statusCode}`));
+        return;
+      }
+      let body = '';
+      res.setEncoding('utf-8');
+      res.on('data', (chunk) => { body += chunk; });
+      res.on('end', () => resolve(body));
+    });
+    req.on('error', reject);
+    req.setTimeout(timeoutMs, () => req.destroy(new Error(`Timeout GET ${wikiPage}`)));
+  });
+}
+
+async function fetchLatestFromWiki() {
+  const home = await fetchRaw('Home.md');
+  const archiveSection = home.split('## 📅 Digests archivés')[1] ?? home;
+  const match = archiveSection.match(/\[([\w-]+)\]\(\1\)/);
+  if (!match) throw new Error('Aucune page de digest trouvée dans Home.md');
+  const label = match[1];
+  const content = await fetchRaw(`${label}.md`);
+  return `<!-- label: ${label} -->\n${content}`;
+}
 
 let win = null;
 let tray = null;
@@ -153,9 +185,21 @@ function toggleWindowVisibility() {
   win.hide();
 }
 
-function pushContent() {
+async function pushContent({ preferLocal = false } = {}) {
   if (!win) return;
-  const markdown = readLatestContent();
+  let markdown = null;
+
+  if (!preferLocal) {
+    try {
+      markdown = await fetchLatestFromWiki();
+      console.log('[Widget] Dernier digest récupéré depuis le wiki');
+    } catch (err) {
+      console.log('[Widget] Lecture wiki échouée, repli sur le fichier local :', err.message);
+    }
+  }
+
+  if (!markdown) markdown = readLatestContent();
+
   if (!markdown) {
     win.webContents.send('update-content', { incontournables: null, weekLabel: null, wikiUrl: null, hasTranslation: false });
     return;
@@ -190,7 +234,7 @@ function runPipeline(mode = 'daily') {
     pipelineRunning = false;
     const success = code === 0;
     win?.webContents.send('pipeline-status', { running: false, success });
-    if (success) pushContent();
+    if (success) pushContent({ preferLocal: true });
   });
 }
 
