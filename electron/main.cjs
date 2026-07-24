@@ -267,12 +267,23 @@ app.whenReady().then(() => {
 ipcMain.on('get-latest', () => pushContent());
 ipcMain.on('run-pipeline', () => runPipeline(new Date().getDay() === 5 ? 'weekly' : 'daily'));
 ipcMain.on('close-window', () => win?.hide());
-ipcMain.on('open-url', (_, url) => shell.openExternal(url));
+ipcMain.on('open-url', (_, url) => {
+  if (typeof url !== 'string') return;
+  let parsed;
+  try { parsed = new URL(url); } catch { return; }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return;
+  shell.openExternal(url);
+});
 ipcMain.on('open-translated', () => {
   if (fs.existsSync(OUTPUT_TRANSLATED)) shell.openPath(OUTPUT_TRANSLATED);
 });
+const TRAY_ICON_MAX_LENGTH = 500_000; // ~365 Ko décodé, largement suffisant pour une icône 32x32
 ipcMain.on('set-tray-icon', (_, dataUrl) => {
+  if (typeof dataUrl !== 'string') return;
+  if (dataUrl.length > TRAY_ICON_MAX_LENGTH) return;
+  if (!/^data:image\/(png|jpeg|gif);base64,/.test(dataUrl)) return;
   const icon = nativeImage.createFromDataURL(dataUrl);
+  if (icon.isEmpty()) return;
   tray?.setImage(icon);
   win?.setIcon(icon);
 });
