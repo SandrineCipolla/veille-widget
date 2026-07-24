@@ -42,23 +42,27 @@ _Dernière mise à jour : 24 juillet 2026_
 - La logique de fallback multi-modèles est dupliquée entre `openrouter-client.ts` et `translate.ts`
 - La règle "vendredi ⇒ weekly" est dupliquée entre `electron/main.cjs` (2 endroits) et le workflow GitHub Actions
 - Google Drive tokens expirent après 7 jours en mode "testing" (fix : publier l'app dans Google Cloud Console)
-- `CRON_SCHEDULE` dans `.env` n'est lu par aucun code — variable morte à supprimer
+- **[Issue #16](https://github.com/SandrineCipolla/veille-widget/issues/16)** — `electron/main.cjs` contient de la logique métier (parsing Markdown, fetch HTTP du wiki, génération d'icône PNG) qui échappe au typage TypeScript strict et aux tests unitaires (dossier exclu de `tsconfig.json`/`__tests__/`), en contradiction avec la règle "orchestration seulement" que ce fichier devrait suivre
+- **[Issue #17](https://github.com/SandrineCipolla/veille-widget/issues/17)** — `scripts/auth-google.ts` : flux OAuth vulnérable au CSRF (pas de paramètre `state` généré/vérifié). Impact faible : script one-shot lancé manuellement en local, jamais exposé publiquement
 
 ---
 
-## Corrigé le 24/07/2026 (2e passe d'audit)
+## Corrigé le 24/07/2026 (2e et 3e passes d'audit)
 
 - Code mort supprimé : `src/index.ts` (entrée headless systray2, jamais utilisée en prod — `lancer-veille.vbs` lance `npm run electron`), `src/cron.ts`, dépendances `systray2` et `@types/node-cron`
 - Token GitHub exposé en clair dans l'URL git (`https://TOKEN@github.com/...`, visible dans la liste des process) — remplacé par une authentification via header HTTP passé en variable d'env (`GIT_CONFIG_COUNT`/`GIT_CONFIG_KEY_0`/`GIT_CONFIG_VALUE_0`)
 - Ternaire redondant dans `config.ts` pour la résolution `OPENROUTER_MODEL`/`OPENROUTER_MODELS`
 - Champs `cronDaily`/`cronWeekly` morts dans `config.ts` (plus lus depuis la suppression de `cron.ts`)
+- `CRON_SCHEDULE` supprimé du `.env` local (mort, jamais lu par aucun code)
+- `scripts/test-pipeline.ts` utilisait l'ancienne API OpenRouter (`config.openrouterModel` singulier, anciennes signatures de fonctions) et plantait dès la première étape — invisible car `scripts/` était exclu de `tsconfig.json`. Corrigé + `include` élargi pour attraper ce genre de dérive à l'avenir (voir [PR #15](https://github.com/SandrineCipolla/veille-widget/pull/15))
 
 ## Ce qu'on souhaite faire
 
 ### Nettoyage technique restant (priorité basse, pas bloquant)
 - Factoriser la logique de fallback multi-modèles entre `openrouter-client.ts` et `translate.ts`
 - Unifier la lecture de config entre `electron/main.cjs` et `src/config.ts`
-- Supprimer `CRON_SCHEDULE` (mort dans `.env`)
+- [Issue #16](https://github.com/SandrineCipolla/veille-widget/issues/16) — extraire la logique métier hors de `electron/main.cjs`
+- [Issue #17](https://github.com/SandrineCipolla/veille-widget/issues/17) — paramètre `state` OAuth dans `scripts/auth-google.ts`
 
 ### Feature : impact sur mes projets (n8n)
 Utiliser n8n pour analyser chaque digest hebdomadaire et générer une section `## 🎯 Impact sur mes projets` — en comparant les news tech avec le contexte de StockHub et veille-widget.
