@@ -157,7 +157,7 @@ ${sections}
 
 ## 🌍 Sources
 
-9 topics interrogés à chaque run via **Tavily** :
+10 topics interrogés à chaque run via **Tavily** :
 
 - Stack TS / React / Node.js
 - Architecture & patterns logiciels
@@ -168,6 +168,7 @@ ${sections}
 - 🇫🇷 CERT-FR & ANSSI
 - 🇫🇷 Réglementation & CNIL
 - 🇫🇷 Communauté dev francophone
+- 🇫🇷 IA & outils de dev
 
 ---
 

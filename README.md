@@ -66,9 +66,9 @@ Déclencheurs possibles — le cloud est la source de vérité, fiable même PC 
 [node-cron local] ── CRON_DAILY / CRON_WEEKLY ────────┤  ← optionnel, désactivé par défaut
                                                        ▼
                                ┌─────────────────────────────────────┐
-                               │  Tavily — 9 topics × 3 résultats    │
+                               │  Tavily — 10 topics × 3 résultats   │
                                │  6 topics EN (7j)                   │
-                               │  3 topics FR (14j, keepDays=true)   │
+                               │  4 topics FR (14j, keepDays=true)   │
                                └─────────────────┬───────────────────┘
                                                  │
                     [mode weekly] ───────────────┤
@@ -218,7 +218,7 @@ raccourci vers ce fichier dans le dossier de démarrage (`Win+R` → `shell:star
 src/
 ├── config.ts             # validation .env (zod)
 ├── pipeline.ts           # pipeline principal (RunMode daily/weekly)
-├── tavily-client.ts      # 9 topics EN+FR en parallèle
+├── tavily-client.ts      # 10 topics EN+FR en parallèle
 ├── openrouter-client.ts  # appel LLM, fallback multi-modèles ordonné
 ├── github-wiki.ts        # push wiki via simple-git
 ├── drive-client.ts       # upload Google Drive OAuth2
@@ -283,3 +283,4 @@ Deux repos distincts :
 | CERT-FR & ANSSI [FR] | Bloc 3 — Sécurité |
 | Réglementation & CNIL [FR] | Bloc 1 — Veille réglementaire |
 | Communauté dev francophone [FR] | Bloc 1 — Veille & innovation |
+| IA & outils de dev [FR] | Bloc 1 — Veille & innovation |

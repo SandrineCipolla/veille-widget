@@ -84,6 +84,14 @@ const SEARCH_TOPICS: ReadonlyArray<SearchTopic> = [
     includeDomains: ['developpez.com', 'humancoders.com', 'journalduhacker.net'],
     keepDays: true,
   },
+  {
+    label: 'IA & outils de dev [FR]',
+    query: 'intelligence artificielle outils développeur actualité',
+    days: 14,
+    topic: 'general',
+    includeDomains: ['prompt-inspiration.com'],
+    keepDays: true,
+  },
 ];
 
 const SearchResultSchema = z.object({
