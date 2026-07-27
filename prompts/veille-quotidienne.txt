@@ -14,14 +14,14 @@ RÈGLES :
 - Ne jamais inventer ni compléter une URL. Si le lien est incertain : [lien à vérifier].
 - Si une section n'a aucune actualité pertinente : l'omettre complètement — pas de "Rien de notable".
 - Chaque item DOIT mentionner son impact concret ou lien RNCP.
-- Si rien de pertinent n'est trouvé : écrire uniquement "Rien de notable aujourd'hui."
+- Si rien de pertinent n'est trouvé : garder le header "## 🔥 À retenir aujourd'hui" et écrire juste en dessous "Rien de notable aujourd'hui." — ne jamais omettre ce header, même quand il n'y a rien à signaler.
 
 FORMAT DE SORTIE (Markdown) :
 
 # Veille techno — {{DATE}}
 
 ## 🔥 À retenir aujourd'hui
-[1-2 items max — seulement ce qui est vraiment nouveau et impactant]
+[1-2 items max — seulement ce qui est vraiment nouveau et impactant. Si rien de pertinent : "Rien de notable aujourd'hui." à la place des items, header conservé.]
 
 ## 🔒 Sécurité (si alerte critique uniquement)
 

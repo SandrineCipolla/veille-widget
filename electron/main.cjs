@@ -180,7 +180,11 @@ function extractIncontournables(markdown) {
   const highlighted = markdown.match(/##\s*🔥\s*(?:Incontournables|À retenir aujourd'hui)([\s\S]*?)(?=\n##\s|$)/);
   if (highlighted) return highlighted[0].trim();
   const first = markdown.match(/##[^\n]+([\s\S]*?)(?=\n##\s|$)/);
-  return first ? first[0].trim() : null;
+  if (first) return first[0].trim();
+  // Le modèle peut omettre tout header quand il n'y a rien à signaler
+  // (ex: "Rien de notable aujourd'hui.") — éviter un widget vide en silence.
+  if (/rien de notable/i.test(markdown)) return '🔥 À retenir aujourd\'hui\n\nRien de notable aujourd\'hui.';
+  return null;
 }
 
 function extractLabel(markdown) {

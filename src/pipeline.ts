@@ -97,6 +97,8 @@ export async function runVeille(mode: RunMode = 'daily'): Promise<void> {
           const message = formatDiscordMessage(incontournables, label, config.githubUsername, config.githubRepo);
           await postToDiscord(config.discordWebhookUrl, message);
           console.log('[Veille] Discord → message envoyé');
+        } else {
+          console.warn('[Veille] Discord (non bloquant) : aucune section exploitable trouvée dans le digest, envoi ignoré');
         }
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
