@@ -6,8 +6,8 @@ import { searchVeilleTopics } from './tavily-client.js';
 import { generateVeilleMarkdown } from './openrouter-client.js';
 import { pushToWiki } from './github-wiki.js';
 import { notifySuccess, notifyError } from './notifier.js';
-import { getRunLabel, saveOutput, saveLatestDigest, getWeekDailyDigests } from './output.js';
-import { uploadToDrive } from './drive-client.js';
+import { getRunLabel, saveOutput, saveLatestDigest, getWeekDailyDigests, markdownToHtml } from './output.js';
+import { uploadToDrive, uploadHtmlAsGoogleDoc } from './drive-client.js';
 import { extractIncontournables, formatDiscordMessage, postToDiscord } from './discord-client.js';
 import { appendRunLog } from './run-logger.js';
 import { translateDigest } from './translate.js';
@@ -78,8 +78,11 @@ export async function runVeille(mode: RunMode = 'daily'): Promise<void> {
 
       if (config.google) {
         try {
-          const frFilename = filename.replace(/\.md$/, '-fr.md');
-          translatedDriveUrl = await uploadToDrive(config.google, frFilename, translated);
+          // Google Doc natif plutôt que .md brut — Drive n'affiche pas le
+          // Markdown mis en forme (titres/gras/liens restent du texte plat).
+          const frFilename = filename.replace(/\.md$/, '') + ' (FR)';
+          const html = markdownToHtml(translated);
+          translatedDriveUrl = await uploadHtmlAsGoogleDoc(config.google, frFilename, html);
           console.log(`[Veille] Traduction Drive → ${translatedDriveUrl}`);
         } catch (err) {
           const error = err instanceof Error ? err : new Error(String(err));

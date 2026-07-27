@@ -86,7 +86,7 @@ export function saveTranslatedDigest(content: string, outputDir = './output'): v
   fs.writeFileSync(path.join(dir, 'latest-traduit.html'), markdownToHtml(content), 'utf-8');
 }
 
-function markdownToHtml(md: string): string {
+export function markdownToHtml(md: string): string {
   const lines = md.split('\n');
   const htmlLines: string[] = [];
   let inList = false;
