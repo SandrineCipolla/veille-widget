@@ -3,7 +3,7 @@
  * Lance : npx tsx scripts/test-pipeline.ts [--mode=daily|weekly] [--skip-github] [--skip-drive] [--skip-discord]
  */
 import { config } from '../src/config.js';
-import { searchVeilleTopics } from '../src/tavily-client.js';
+import { searchVeilleTopics, resolveSourceRefs } from '../src/tavily-client.js';
 import { generateVeilleMarkdown } from '../src/openrouter-client.js';
 import { pushToWiki } from '../src/github-wiki.js';
 import { uploadToDrive } from '../src/drive-client.js';
@@ -47,18 +47,18 @@ console.log(`✓ Prompt chargé : ${PROMPT_FILES[mode]} (${prompt.length} caract
 console.log('\n[1/3] Recherche Tavily (9 topics × 3 résultats)…');
 const t0 = Date.now();
 const freshResults = await searchVeilleTopics(config.tavilyApiKey, TAVILY_DAYS[mode]);
-console.log(`✓ Tavily : ${freshResults.length} caractères en ${Date.now() - t0} ms`);
+console.log(`✓ Tavily : ${freshResults.text.length} caractères en ${Date.now() - t0} ms`);
 console.log('--- Aperçu Tavily (500 premiers caractères) ---');
-console.log(freshResults.slice(0, 500) + '…\n');
+console.log(freshResults.text.slice(0, 500) + '…\n');
 
 // ── 3. OpenRouter ──────────────────────────────────────────────────────────
-let searchInput = freshResults;
+let searchInput = freshResults.text;
 if (mode === 'weekly') {
   const weekDigests = getWeekDailyDigests(OUTPUT_DIR);
   if (weekDigests) {
     searchInput =
       `DIGESTS LUNDI→JEUDI :\n\n${weekDigests}\n\n` +
-      `---\n\nNOUVEAUTÉS DU VENDREDI :\n\n${freshResults}`;
+      `---\n\nNOUVEAUTÉS DU VENDREDI :\n\n${freshResults.text}`;
     console.log('[weekly] Digests lundi→jeudi inclus\n');
   } else {
     console.log('[weekly] Aucun digest de semaine trouvé (normal si premier run)\n');
@@ -67,7 +67,8 @@ if (mode === 'weekly') {
 
 console.log(`[2/3] Rédaction OpenRouter (${config.openrouterModels.join(' → ')})…`);
 const t1 = Date.now();
-const { content: body, modelUsed } = await generateVeilleMarkdown(config.openrouterApiKey, config.openrouterModels, prompt, searchInput);
+const { content: rawBody, modelUsed } = await generateVeilleMarkdown(config.openrouterApiKey, config.openrouterModels, prompt, searchInput);
+const body = resolveSourceRefs(rawBody, freshResults.sources);
 console.log(`✓ OpenRouter : ${body.length} caractères en ${Date.now() - t1} ms (modèle : ${modelUsed})`);
 
 const label = getRunLabel(mode);
