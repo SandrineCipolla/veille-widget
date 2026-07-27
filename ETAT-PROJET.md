@@ -17,9 +17,37 @@ _Dernière mise à jour : 24 juillet 2026_
 - Topics FR : fenêtre 14 jours préservée (`keepDays`)
 
 ### Automatisation cloud — source de vérité
-- **GitHub Actions** (`.github/workflows/veille.yml`) : cron `30 7 * * 1-5` (9h30 Paris été / 8h30 hiver — le cron est en UTC fixe), tourne indépendamment du PC
-- Le vendredi, le job enchaîne daily puis weekly dans le même run
+- **GitHub Actions** (`.github/workflows/veille.yml`) : plus de cron natif GitHub (`schedule:`) — le déclenchement `schedule` de GitHub Actions est best-effort ; on a constaté des retards de plusieurs heures (dont un run parti à 12h54 Paris pour un cron prévu 9h30, entraînant un digest/Discord en double le 27/07) et au moins un événement carrément perdu le même jour. Remplacé par un déclencheur externe (**cron-job.org**, gratuit) qui appelle l'API `workflow_dispatch`
+- Le workflow accepte un input `mode` (`auto` / `daily` / `weekly`) — `auto` reproduit l'ancien comportement (quotidien + hebdo si vendredi, utilisé par le bouton manuel GitHub), `daily`/`weekly` permettent un déclenchement externe explicite et découplé des deux
+- Tourne indépendamment du PC
 - Secrets configurés sur le repo `veille-widget` : `TAVILY_API_KEY`, `OPENROUTER_API_KEY`, `OPENROUTER_MODELS`, `GH_PAT`, `WIKI_USERNAME`, `WIKI_REPO`, `DISCORD_WEBHOOK_URL`
+
+#### Configuration du déclencheur externe (cron-job.org) — 2 jobs séparés
+
+1. **Créer le token GitHub** (à faire une seule fois, manuellement — aucune API ne permet de créer un token, c'est volontaire côté GitHub) :
+   - https://github.com/settings/tokens?type=beta → *Generate new token*
+   - **Repository access** → *Only select repositories* → `veille-widget`
+   - **Permissions** → *Repository permissions* → **Actions : Read and write** (rien d'autre)
+   - Expiration : 1 an max recommandé (fine-grained), penser à le renouveler à l'échéance
+   - Copier le token affiché (`github_pat_...`) — il ne sera plus jamais visible ensuite
+
+2. **Configurer 2 cronjobs sur cron-job.org** (compte gratuit sur https://cron-job.org) — un par mode, pour un suivi/historique séparé de chacun :
+
+   **Job "Veille techno - quotidien"**
+   - URL : `https://api.github.com/repos/SandrineCipolla/veille-widget/actions/workflows/veille.yml/dispatches`
+   - Méthode : `POST`
+   - Headers : `Authorization: Bearer <TOKEN>`, `Accept: application/vnd.github+json`, `X-GitHub-Api-Version: 2022-11-28`, `Content-Type: application/json`
+   - Body : `{"ref":"main","inputs":{"mode":"daily"}}`
+   - Planification : lun-ven, 10:00, **fuseau horaire Europe/Paris**
+
+   **Job "Veille techno - récap hebdo"**
+   - Même URL, méthode, headers
+   - Body : `{"ref":"main","inputs":{"mode":"weekly"}}`
+   - Planification : **vendredi uniquement**, 10:00, **fuseau horaire Europe/Paris**
+
+3. Vérifier après le premier déclenchement : `gh run list --repo SandrineCipolla/veille-widget --workflow=veille.yml` doit montrer un run `event: workflow_dispatch` autour de 10h Paris
+
+Pas de filet de secours automatique si cron-job.org tombe en panne un jour (décision explicite, pour éviter les doublons avec un 2e système) — lancement manuel depuis GitHub (`gh workflow run veille.yml` ou bouton *Run workflow*) en cas de besoin.
 
 ### Widget Electron (Windows)
 - Icône systray, fenêtre flottante avec les incontournables du dernier digest

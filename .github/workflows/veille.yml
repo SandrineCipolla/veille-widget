@@ -1,9 +1,21 @@
 name: Veille Technologique
 
 on:
-  schedule:
-    - cron: '30 7 * * 1-5'  # 9h30 Paris (UTC+2 été) — lun→ven
-  workflow_dispatch:          # déclenchement manuel depuis GitHub
+  # Pas de cron natif GitHub Actions ici — le déclenchement schedule est
+  # best-effort côté GitHub (délai de quelques minutes à plusieurs heures
+  # possible, événement parfois perdu en cas de forte charge). Le run
+  # automatique quotidien (10h Paris, été comme hiver) est déclenché par un
+  # service externe (cron-job.org) qui appelle l'API workflow_dispatch —
+  # voir ETAT-PROJET.md pour la configuration exacte.
+  workflow_dispatch:          # déclenchement manuel (bouton GitHub, ou API externe)
+    inputs:
+      mode:
+        description: >-
+          auto (bouton GitHub — quotidien, + hebdo si vendredi) ; daily ou
+          weekly pour un déclenchement externe explicite (cron-job.org)
+        type: choice
+        options: [auto, daily, weekly]
+        default: auto
 
 jobs:
   veille:
@@ -30,7 +42,24 @@ jobs:
           restore-keys: |
             output-${{ env.WEEK_KEY }}-
 
+      - name: Déterminer les modes à exécuter
+        id: modes
+        run: |
+          MODE="${{ github.event.inputs.mode || 'auto' }}"
+          IS_FRIDAY=$([ "$(date +%u)" = "5" ] && echo true || echo false)
+          if [ "$MODE" = "daily" ]; then
+            echo "run_daily=true" >> "$GITHUB_OUTPUT"
+            echo "run_weekly=false" >> "$GITHUB_OUTPUT"
+          elif [ "$MODE" = "weekly" ]; then
+            echo "run_daily=false" >> "$GITHUB_OUTPUT"
+            echo "run_weekly=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_daily=true" >> "$GITHUB_OUTPUT"
+            echo "run_weekly=$IS_FRIDAY" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Lancer la veille quotidienne
+        if: steps.modes.outputs.run_daily == 'true'
         run: npx tsx src/run-once.ts --mode=daily
         env:
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
@@ -41,12 +70,8 @@ jobs:
           GITHUB_REPO: ${{ secrets.WIKI_REPO }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
 
-      - name: Déterminer si récap hebdo (vendredi)
-        id: day
-        run: echo "is_friday=$([ "$(date +%u)" = "5" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-
-      - name: Lancer le récap hebdo (vendredi uniquement)
-        if: steps.day.outputs.is_friday == 'true'
+      - name: Lancer le récap hebdo
+        if: steps.modes.outputs.run_weekly == 'true'
         run: npx tsx src/run-once.ts --mode=weekly
         env:
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
