@@ -66,11 +66,26 @@ export async function runVeille(mode: RunMode = 'daily'): Promise<void> {
     const filename = path.basename(filepath);
     saveLatestDigest(markdown, label, OUTPUT_DIR);
 
-    // Traduction locale uniquement — jamais publiée (output/ est gitignored)
+    // Traduction — sauvegarde locale (bouton "Version FR" du widget) + upload
+    // vers le Drive privé de Sandrine (accessible même après un run cloud,
+    // dont le disque éphémère ne survit pas à la fin du job). Jamais publiée
+    // sur le wiki public.
+    let translatedDriveUrl: string | undefined;
     try {
-      console.log('[Veille] Traduction locale…');
+      console.log('[Veille] Traduction…');
       const translated = await translateDigest(markdown, config.openrouterApiKey, config.openrouterModels);
       saveTranslatedDigest(translated, OUTPUT_DIR);
+
+      if (config.google) {
+        try {
+          const frFilename = filename.replace(/\.md$/, '-fr.md');
+          translatedDriveUrl = await uploadToDrive(config.google, frFilename, translated);
+          console.log(`[Veille] Traduction Drive → ${translatedDriveUrl}`);
+        } catch (err) {
+          const error = err instanceof Error ? err : new Error(String(err));
+          console.error('[Veille] Traduction Drive (non bloquant) :', error.message);
+        }
+      }
     } catch (err) {
       console.warn('[Veille] Traduction (non bloquant) :', (err as Error).message);
     }
@@ -94,7 +109,7 @@ export async function runVeille(mode: RunMode = 'daily'): Promise<void> {
       try {
         const incontournables = extractIncontournables(markdown);
         if (incontournables) {
-          const message = formatDiscordMessage(incontournables, label, config.githubUsername, config.githubRepo);
+          const message = formatDiscordMessage(incontournables, label, config.githubUsername, config.githubRepo, translatedDriveUrl);
           await postToDiscord(config.discordWebhookUrl, message);
           console.log('[Veille] Discord → message envoyé');
         } else {
