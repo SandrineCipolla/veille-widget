@@ -66,6 +66,7 @@ _Dernière mise à jour : 24 juillet 2026_
 ## Corrigé le 27/07/2026
 
 - **Plantage du widget après plusieurs jours/semaines PC allumé** — `electron/main.cjs` n'avait aucun verrou anti-doublon (`requestSingleInstanceLock`) : chaque relance (veille/réveil, raccourci de démarrage, lancement manuel) empilait une nouvelle instance complète (fenêtre + tray + cron) au lieu de reprendre la main sur l'existante. 8 processus `electron.exe` (2 instances) trouvés en simultané au moment du diagnostic. Corrigé — une deuxième tentative de lancement réactive maintenant la fenêtre existante au lieu d'en créer une nouvelle. Testé en conditions réelles : 2e lancement confirmé sans création de nouveaux processus.
+- **Discord et widget silencieusement vides certains jours** — quand le modèle juge qu'il n'y a "rien de notable", le prompt lui demandait d'écrire juste "Rien de notable aujourd'hui." sans header Markdown. `extractIncontournables` (Discord ET widget, deux implémentations dupliquées) cherche le header `## 🔥` : sans lui, rien n'est trouvé, et le code passait ce cas sous silence — pas de message Discord, pas d'erreur, widget vide. Repro le 27/07 (digest du jour = uniquement "Rien de notable aujourd'hui."). Corrigé à deux niveaux : le prompt garde maintenant le header même dans ce cas, et les deux `extractIncontournables` reconnaissent "rien de notable" en repli si jamais le modèle omet quand même le header. `pipeline.ts` logue aussi explicitement quand Discord est ignoré faute de contenu (au lieu du silence total d'avant).
 
 ## Ce qu'on souhaite faire
 

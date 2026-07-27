@@ -18,6 +18,10 @@ const DIGEST_WITHOUT_SECTION = `# Veille techno 2026-W24
 
 Contenu sans incontournables.`;
 
+const DIGEST_RIEN_DE_NOTABLE_SANS_HEADER = `# Veille techno — 27 juillet 2026
+
+Rien de notable aujourd'hui.`;
+
 describe('extractIncontournables', () => {
   it('extrait la section quand elle est présente', () => {
     const result = extractIncontournables(DIGEST_WITH_SECTION);
@@ -38,6 +42,12 @@ describe('extractIncontournables', () => {
   it('ne capture pas le contenu de la section suivante', () => {
     const result = extractIncontournables(DIGEST_WITH_SECTION);
     expect(result).not.toContain('Stack TS/React/Node.js');
+  });
+
+  it('reconnaît "rien de notable" même sans header (le modèle omet parfois la consigne)', () => {
+    const result = extractIncontournables(DIGEST_RIEN_DE_NOTABLE_SANS_HEADER);
+    expect(result).not.toBeNull();
+    expect(result).toContain('Rien de notable aujourd\'hui');
   });
 });
 

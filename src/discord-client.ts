@@ -2,12 +2,15 @@ const DISCORD_MAX_LENGTH = 1900;
 
 /**
  * Extrait la section "🔥 Incontournables" d'un digest Markdown.
- * Retourne null si la section est absente.
+ * Repli sur "Rien de notable" si le modèle a omis le header malgré la
+ * consigne du prompt — évite de silencieusement ne rien envoyer/afficher.
+ * Retourne null si vraiment aucun contenu exploitable n'est trouvé.
  */
 export function extractIncontournables(markdown: string): string | null {
   const match = markdown.match(/##\s*🔥\s*(?:Incontournables|À retenir aujourd'hui)([\s\S]*?)(?=\n##\s|$)/);
-  if (!match) return null;
-  return match[0].trim();
+  if (match) return match[0].trim();
+  if (/rien de notable/i.test(markdown)) return '## 🔥 À retenir aujourd\'hui\n\nRien de notable aujourd\'hui.';
+  return null;
 }
 
 /**
