@@ -17,7 +17,7 @@ _Dernière mise à jour : 24 juillet 2026_
 - Topics FR : fenêtre 14 jours préservée (`keepDays`)
 
 ### Automatisation cloud — source de vérité
-- **GitHub Actions** (`.github/workflows/veille.yml`) : cron `30 7 * * 1-5` (9h30 Paris), tourne indépendamment du PC
+- **GitHub Actions** (`.github/workflows/veille.yml`) : cron `30 7 * * 1-5` (9h30 Paris été / 8h30 hiver — le cron est en UTC fixe), tourne indépendamment du PC
 - Le vendredi, le job enchaîne daily puis weekly dans le même run
 - Secrets configurés sur le repo `veille-widget` : `TAVILY_API_KEY`, `OPENROUTER_API_KEY`, `OPENROUTER_MODELS`, `GH_PAT`, `WIKI_USERNAME`, `WIKI_REPO`, `DISCORD_WEBHOOK_URL`
 

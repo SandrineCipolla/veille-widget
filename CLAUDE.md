@@ -80,6 +80,10 @@ veille-widget/
 ├── prompts/
 │   ├── veille-quotidienne.txt
 │   └── veille-recap.txt
+├── scripts/
+│   ├── test-pipeline.ts       # test complet (--mode, --skip-*)
+│   ├── auth-google.ts         # OAuth2 Google Drive (one-shot)
+│   └── list-free-models.ts    # liste les modèles OpenRouter gratuits
 └── output/                   # fichiers Markdown générés (gitignored)
 ```
 
