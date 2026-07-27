@@ -72,6 +72,17 @@ describe('formatDiscordMessage', () => {
     expect(msg).toContain('React 19 RC');
   });
 
+  it('inclut le lien Drive de la traduction quand fourni', () => {
+    const driveUrl = 'https://drive.google.com/file/d/abc123/view';
+    const msg = formatDiscordMessage(incontournables, weekLabel, owner, repo, driveUrl);
+    expect(msg).toContain(driveUrl);
+  });
+
+  it("n'inclut aucune ligne traduction quand le lien Drive est absent", () => {
+    const msg = formatDiscordMessage(incontournables, weekLabel, owner, repo);
+    expect(msg).not.toContain('Traduction complète');
+  });
+
   it('tronque à 1900 caractères max', () => {
     const longContent = '## 🔥 Incontournables\n\n' + 'x'.repeat(2000);
     const msg = formatDiscordMessage(longContent, weekLabel, owner, repo);

@@ -14,7 +14,8 @@ export function extractIncontournables(markdown: string): string | null {
 }
 
 /**
- * Formate le message Discord : incontournables + lien wiki.
+ * Formate le message Discord : incontournables + lien wiki (+ lien Drive privé
+ * vers la traduction FR si elle a été uploadée avec succès).
  * Tronque proprement à 1900 caractères si nécessaire (marge sécurité 2000).
  */
 export function formatDiscordMessage(
@@ -22,9 +23,11 @@ export function formatDiscordMessage(
   weekLabel: string,
   wikiOwner: string,
   wikiRepo: string,
+  translatedDriveUrl?: string,
 ): string {
   const wikiUrl = `https://github.com/${wikiOwner}/${wikiRepo}/wiki`;
-  const footer = `\n\n📖 [Lire le digest complet](${wikiUrl})`;
+  const translatedLine = translatedDriveUrl ? `\n🇫🇷 [Traduction complète (Drive privé)](${translatedDriveUrl})` : '';
+  const footer = `\n\n📖 [Lire le digest complet](${wikiUrl})${translatedLine}`;
   const isWeekly = /^\d{4}-W/.test(weekLabel);
   const title = isWeekly ? `📋 Récap de la semaine — ${weekLabel}` : `🗓️ Veille techno — ${weekLabel}`;
   const header = `**${title}**\n\n`;
