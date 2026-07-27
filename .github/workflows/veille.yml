@@ -2,11 +2,37 @@ name: Veille Technologique
 
 on:
   schedule:
-    - cron: '30 7 * * 1-5'  # 9h30 Paris (UTC+2 été) — lun→ven
-  workflow_dispatch:          # déclenchement manuel depuis GitHub
+    # GitHub Actions ne connaît que l'UTC — deux crons pour viser 10h Paris été
+    # comme hiver. Le job check-time détermine lequel des deux correspond à
+    # l'heure réelle et annule l'autre (voir job veille, condition needs).
+    - cron: '0 8 * * 1-5'  # 10h Paris en été (UTC+2)
+    - cron: '0 9 * * 1-5'  # 10h Paris en hiver (UTC+1)
+  workflow_dispatch:          # déclenchement manuel depuis GitHub — toujours exécuté
 
 jobs:
+  check-time:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - name: Vérifier qu'il est bien 10h à Paris (ignoré si déclenchement manuel)
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          HOUR=$(TZ=Europe/Paris date +%H)
+          if [ "$HOUR" = "10" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "Il est ${HOUR}h à Paris, pas 10h — ce cron correspond à l'autre saison (heure d'été/hiver), on annule."
+          fi
+
   veille:
+    needs: check-time
+    if: needs.check-time.outputs.should_run == 'true'
     runs-on: ubuntu-latest
 
     steps:

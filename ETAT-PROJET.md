@@ -17,8 +17,10 @@ _Dernière mise à jour : 24 juillet 2026_
 - Topics FR : fenêtre 14 jours préservée (`keepDays`)
 
 ### Automatisation cloud — source de vérité
-- **GitHub Actions** (`.github/workflows/veille.yml`) : cron `30 7 * * 1-5` (9h30 Paris été / 8h30 hiver — le cron est en UTC fixe), tourne indépendamment du PC
+- **GitHub Actions** (`.github/workflows/veille.yml`) : deux crons UTC (`0 8` et `0 9 * * 1-5`) visent tous deux 10h Paris — été et hiver. Un job `check-time` vérifie l'heure réelle à Paris (`TZ=Europe/Paris`) et annule celui des deux qui ne correspond pas à la bonne saison. Déclenchement manuel (`workflow_dispatch`) toujours exécuté, sans ce filtre
+- Tourne indépendamment du PC
 - Le vendredi, le job enchaîne daily puis weekly dans le même run
+- ⚠️ Le déclenchement `schedule` de GitHub Actions reste **best-effort**, pas garanti à l'heure pile (délai de quelques minutes à plusieurs heures possible en cas de forte charge côté GitHub) — limite documentée de la plateforme, aucun réglage de cron ne la corrige. Un déclencheur externe (ex: cron-job.org appelant l'API GitHub) donnerait un horaire garanti mais ajoute un compte tiers + un token GitHub à gérer hors de notre contrôle — pas mis en place, décision explicite
 - Secrets configurés sur le repo `veille-widget` : `TAVILY_API_KEY`, `OPENROUTER_API_KEY`, `OPENROUTER_MODELS`, `GH_PAT`, `WIKI_USERNAME`, `WIKI_REPO`, `DISCORD_WEBHOOK_URL`
 
 ### Widget Electron (Windows)
