@@ -61,7 +61,7 @@ vendredi hérite ainsi des fichiers `output/YYYY-MM-DD.md` de lundi à jeudi.
 Déclencheurs possibles — le cloud est la source de vérité, fiable même PC éteint :
 
 ```
-[GitHub Actions]  ── cron 30 7 * * 1-5 (9h30 Paris) ──┐  ← source de vérité, tourne même PC éteint
+[GitHub Actions]  ── cron 30 7 * * 1-5 (9h30 Paris été / 8h30 hiver) ──┐  ← source de vérité, tourne même PC éteint
 [Widget Electron] ── clic "Lancer la veille" ─────────┤
 [node-cron local] ── CRON_DAILY / CRON_WEEKLY ────────┤  ← optionnel, désactivé par défaut
                                                        ▼
@@ -194,6 +194,9 @@ npx tsx scripts/test-pipeline.ts --mode=weekly --skip-github --skip-drive --skip
 # Authentification Google Drive (one-shot)
 npx tsx scripts/auth-google.ts
 
+# Lister les modèles OpenRouter gratuits disponibles (aide au choix d'OPENROUTER_MODELS)
+npx tsx scripts/list-free-models.ts
+
 # Tests unitaires (vitest)
 npm test
 ```
@@ -224,6 +227,7 @@ src/
 ├── output.ts             # sauvegarde, labels, HTML traduction
 ├── notifier.ts           # notification Windows native
 ├── run-once.ts           # entrée CLI (--mode=daily|weekly), utilisée par le workflow cloud et le widget
+├── run-logger.ts         # log JSON des runs (logs/pipeline.json)
 ├── retry.ts              # backoff exponentiel partagé
 ├── types.ts              # interfaces et RunMode
 └── __tests__/            # tests unitaires (vitest)
@@ -237,7 +241,8 @@ prompts/
 └── veille-recap.txt       # prompt récap vendredi
 scripts/
 ├── test-pipeline.ts      # test complet (--mode, --skip-*)
-└── auth-google.ts        # OAuth2 Google Drive (one-shot)
+├── auth-google.ts        # OAuth2 Google Drive (one-shot)
+└── list-free-models.ts   # liste les modèles OpenRouter gratuits disponibles (aide au choix d'OPENROUTER_MODELS)
 output/                   # gitignored — digests locaux
 ├── YYYY-MM-DD.md
 ├── YYYY-Www.md
