@@ -1,9 +1,13 @@
 name: Veille Technologique
 
 on:
-  schedule:
-    - cron: '30 7 * * 1-5'  # 9h30 Paris (UTC+2 été) — lun→ven
-  workflow_dispatch:          # déclenchement manuel depuis GitHub
+  # Pas de cron natif GitHub Actions ici — le déclenchement schedule est
+  # best-effort côté GitHub (délai de quelques minutes à plusieurs heures
+  # possible, événement parfois perdu en cas de forte charge). Le run
+  # automatique quotidien (10h Paris, été comme hiver) est déclenché par un
+  # service externe (cron-job.org) qui appelle l'API workflow_dispatch —
+  # voir ETAT-PROJET.md pour la configuration exacte.
+  workflow_dispatch:          # déclenchement manuel (bouton GitHub, ou API externe)
 
 jobs:
   veille:

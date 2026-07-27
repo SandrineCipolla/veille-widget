@@ -61,7 +61,7 @@ vendredi hérite ainsi des fichiers `output/YYYY-MM-DD.md` de lundi à jeudi.
 Déclencheurs possibles — le cloud est la source de vérité, fiable même PC éteint :
 
 ```
-[GitHub Actions]  ── cron 30 7 * * 1-5 (9h30 Paris été / 8h30 hiver) ──┐  ← source de vérité, tourne même PC éteint
+[cron-job.org]    ── POST workflow_dispatch, 10h Paris (lun-ven) ──┐  ← source de vérité, tourne même PC éteint
 [Widget Electron] ── clic "Lancer la veille" ─────────┤
 [node-cron local] ── CRON_DAILY / CRON_WEEKLY ────────┤  ← optionnel, désactivé par défaut
                                                        ▼
