@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { config } from './config.js';
-import { searchVeilleTopics } from './tavily-client.js';
+import { searchVeilleTopics, resolveSourceRefs } from './tavily-client.js';
 import { generateVeilleMarkdown } from './openrouter-client.js';
 import { pushToWiki } from './github-wiki.js';
 import { notifySuccess, notifyError } from './notifier.js';
@@ -43,20 +43,23 @@ export async function runVeille(mode: RunMode = 'daily'): Promise<void> {
     console.log(`[Veille] Recherche Tavily (mode: ${mode})…`);
     const freshResults = await searchVeilleTopics(config.tavilyApiKey, TAVILY_DAYS[mode]);
 
-    let searchInput = freshResults;
+    let searchInput = freshResults.text;
     if (mode === 'weekly') {
       const weekDigests = getWeekDailyDigests(OUTPUT_DIR);
       if (weekDigests) {
         searchInput =
           `DIGESTS LUNDI→JEUDI :\n\n${weekDigests}\n\n` +
-          `---\n\nNOUVEAUTÉS DU VENDREDI :\n\n${freshResults}`;
+          `---\n\nNOUVEAUTÉS DU VENDREDI :\n\n${freshResults.text}`;
         console.log('[Veille] Digests de la semaine inclus dans le récap');
       }
     }
 
     console.log(`[Veille] Rédaction OpenRouter (${config.openrouterModels.join(' → ')})…`);
-    const { content: body, modelUsed } = await generateVeilleMarkdown(config.openrouterApiKey, config.openrouterModels, prompt, searchInput);
+    const { content: rawBody, modelUsed } = await generateVeilleMarkdown(config.openrouterApiKey, config.openrouterModels, prompt, searchInput);
     console.log(`[Veille] Modèle utilisé : ${modelUsed}`);
+    // Remplace les [réf:N] laissés par le modèle par les vraies URLs Tavily —
+    // fiable à 100%, contrairement à lui faire recopier l'URL entière.
+    const body = resolveSourceRefs(rawBody, freshResults.sources);
 
     const date = new Date().toLocaleDateString('fr-FR', { dateStyle: 'long' });
     const markdown = `_Généré le ${date}_\n\n${body}`;

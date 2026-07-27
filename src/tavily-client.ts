@@ -111,7 +111,14 @@ function isRetryable(err: unknown): boolean {
  * Lance une recherche Tavily par section de veille en parallèle.
  * @param daysOverride - Remplace le `days` de chaque topic (mode daily : 2 jours)
  */
-export async function searchVeilleTopics(apiKey: string, daysOverride?: number): Promise<string> {
+export interface TavilySearchOutput {
+  /** Texte formaté à passer au LLM, chaque résultat portant une référence [réf:N] */
+  text: string;
+  /** Référence numérique (telle qu'utilisée dans `text`) → URL réelle Tavily */
+  sources: Map<string, string>;
+}
+
+export async function searchVeilleTopics(apiKey: string, daysOverride?: number): Promise<TavilySearchOutput> {
   const client = tavily({ apiKey });
 
   const searches = SEARCH_TOPICS.map((topic) =>
@@ -129,6 +136,8 @@ export async function searchVeilleTopics(apiKey: string, daysOverride?: number):
 
   const settled = await Promise.allSettled(searches);
   const sections: string[] = [];
+  const sources = new Map<string, string>();
+  let refCounter = 0;
 
   for (const [i, outcome] of settled.entries()) {
     const label = SEARCH_TOPICS[i]!.label;
@@ -144,11 +153,31 @@ export async function searchVeilleTopics(apiKey: string, daysOverride?: number):
       .map((p) => p.data!);
 
     const items = results
-      .map((r, idx) => `${idx + 1}. **${r.title}** (${r.publishedDate ?? 'date inconnue'})\n   ${r.content.slice(0, 300)}\n   Source : ${r.url}`)
+      .map((r) => {
+        refCounter += 1;
+        const ref = String(refCounter);
+        sources.set(ref, r.url);
+        return `[réf:${ref}] **${r.title}** (${r.publishedDate ?? 'date inconnue'})\n   ${r.content.slice(0, 300)}`;
+      })
       .join('\n\n');
 
     sections.push(`## ${label}\n${items || '_(aucun résultat)_'}`);
   }
 
-  return sections.join('\n\n');
+  return { text: sections.join('\n\n'), sources };
+}
+
+/**
+ * Remplace chaque marqueur [réf:N] laissé par le modèle par le vrai lien
+ * Markdown vers l'URL Tavily correspondante — évite de demander au modèle
+ * de recopier une URL entière (peu fiable, surtout sur les modèles gratuits ;
+ * dégénère souvent en "[lien à vérifier]" par excès de prudence). Un numéro
+ * de référence absent de `sources` (hallucination du modèle) retombe sur le
+ * même repli texte.
+ */
+export function resolveSourceRefs(markdown: string, sources: Map<string, string>): string {
+  return markdown.replace(/\[réf:\s*(\d+)\]/g, (match, ref: string) => {
+    const url = sources.get(ref);
+    return url ? `[Source](${url})` : '[lien à vérifier]';
+  });
 }
