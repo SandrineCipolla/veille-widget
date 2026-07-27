@@ -100,9 +100,27 @@ async function fetchLatestFromWiki() {
   return `<!-- label: ${label} -->\n${content}`;
 }
 
+// Empêche plusieurs instances du widget de tourner en même temps (systray + fenêtre
+// + cron en double sinon) — arrive facilement sur un PC qui reste allumé des jours/
+// semaines (veille/réveil, redémarrages du raccourci de démarrage, relances manuelles).
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+  app.quit();
+  return;
+}
+
 let win = null;
 let tray = null;
 let pipelineRunning = false;
+
+// Une deuxième tentative de lancement (double-clic sur le raccourci, relance après
+// veille…) réactive la fenêtre existante au lieu de créer une nouvelle instance.
+app.on('second-instance', () => {
+  if (!win) return;
+  if (win.isMinimized()) win.restore();
+  win.show();
+  win.focus();
+});
 
 function createWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;

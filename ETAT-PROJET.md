@@ -29,6 +29,7 @@ _Dernière mise à jour : 24 juillet 2026_
 - Cron local (`CRON_DAILY`/`CRON_WEEKLY`) disponible mais **désactivé par défaut** — évite les doublons avec le run cloud
 - Lien vers le digest complet sur le wiki
 - IPC `open-url` restreint aux schémas http/https, `set-tray-icon` valide le format et la taille du data URL reçu
+- Verrou anti-doublon (`requestSingleInstanceLock`) — une deuxième tentative de lancement réactive la fenêtre existante au lieu de créer une nouvelle instance
 
 ### Lancement automatique
 - **VBS script** (`lancer-veille.vbs`) : lance le widget sans terminal
@@ -61,6 +62,10 @@ _Dernière mise à jour : 24 juillet 2026_
 - Démarrage automatique Windows (`lancer-veille.vbs`) documenté dans le README (était seulement ici)
 - Texte généré sur le wiki public corrigé : `github-wiki.ts` écrivait "Daily (lundi → jeudi)" dans `Home.md` à chaque run alors que le daily tourne aussi le vendredi depuis le fix du workflow
 - Commentaires `config.ts`/`.env.example` complétés (404 manquant dans la liste des codes de fallback), liste de modèles d'exemple réalignée entre README et `.env.example`
+
+## Corrigé le 27/07/2026
+
+- **Plantage du widget après plusieurs jours/semaines PC allumé** — `electron/main.cjs` n'avait aucun verrou anti-doublon (`requestSingleInstanceLock`) : chaque relance (veille/réveil, raccourci de démarrage, lancement manuel) empilait une nouvelle instance complète (fenêtre + tray + cron) au lieu de reprendre la main sur l'existante. 8 processus `electron.exe` (2 instances) trouvés en simultané au moment du diagnostic. Corrigé — une deuxième tentative de lancement réactive maintenant la fenêtre existante au lieu d'en créer une nouvelle. Testé en conditions réelles : 2e lancement confirmé sans création de nouveaux processus.
 
 ## Ce qu'on souhaite faire
 
