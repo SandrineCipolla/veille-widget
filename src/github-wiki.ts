@@ -58,7 +58,21 @@ export async function pushToWiki(
   }
 }
 
-function buildHomeContent(wikiFiles: string[], currentLabel: string): string {
+/**
+ * Vendredi de la semaine ISO 8601 donnée — jour où le récap hebdo est
+ * effectivement généré. Sert de sortKey réelle (voir buildHomeContent).
+ */
+export function isoWeekFriday(year: number, week: number): Date {
+  const jan4 = new Date(Date.UTC(year, 0, 4));
+  const jan4Day = jan4.getUTCDay() || 7; // lundi=1 … dimanche=7
+  const week1Monday = new Date(jan4);
+  week1Monday.setUTCDate(jan4.getUTCDate() - jan4Day + 1);
+  const friday = new Date(week1Monday);
+  friday.setUTCDate(week1Monday.getUTCDate() + (week - 1) * 7 + 4);
+  return friday;
+}
+
+export function buildHomeContent(wikiFiles: string[], currentLabel: string): string {
   type Entry = { label: string; year: number; month: number; sortKey: string; type: 'daily' | 'weekly'; display: string };
 
   const labels = wikiFiles
@@ -67,17 +81,24 @@ function buildHomeContent(wikiFiles: string[], currentLabel: string): string {
 
   if (!labels.includes(currentLabel)) labels.push(currentLabel);
 
+  // sortKey est une vraie date (YYYY-MM-DD), pas le label brut : comparer
+  // "2026-W30" et "2026-07-27" comme du texte classe le "W" au-dessus de
+  // n'importe quel chiffre, donc un récap hebdo d'il y a 3 semaines passerait
+  // toujours devant un digest quotidien plus récent. Le suffixe "b"/"a" sur
+  // les hebdos les fait gagner les ex æquo (générés après le daily du même
+  // jour, puisque le récap est produit en fin de job, après le quotidien).
   const entries: Entry[] = labels.map((label): Entry => {
     if (/^\d{4}-\d{2}-\d{2}$/.test(label)) {
       const [y, m, d] = label.split('-').map(Number);
-      return { label, year: y!, month: m!, sortKey: label, type: 'daily', display: `${d} ${MOIS_FR[(m ?? 1) - 1]} ${y}` };
+      return { label, year: y!, month: m!, sortKey: `${label}a`, type: 'daily', display: `${d} ${MOIS_FR[(m ?? 1) - 1]} ${y}` };
     }
     const [yearStr, weekStr] = label.split('-W');
     const year = Number(yearStr);
     const week = Number(weekStr);
-    const approxDate = new Date(year, 0, 1 + (week - 1) * 7);
-    const month = approxDate.getMonth() + 1;
-    return { label, year, month, sortKey: label, type: 'weekly', display: `Semaine ${week}` };
+    const friday = isoWeekFriday(year, week);
+    const month = friday.getUTCMonth() + 1;
+    const sortKey = `${friday.toISOString().slice(0, 10)}b`;
+    return { label, year, month, sortKey, type: 'weekly', display: `Semaine ${week}` };
   });
 
   entries.sort((a, b) => b.sortKey.localeCompare(a.sortKey));
