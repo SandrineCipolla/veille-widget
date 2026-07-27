@@ -79,13 +79,19 @@ veille-widget/
 │   └── renderer/index.html    # UI du widget
 ├── prompts/
 │   ├── veille-quotidienne.txt
-│   └── veille-recap.txt
+│   ├── veille-recap.txt
+│   └── post-linkedin-recap.txt  # usage manuel — pas lu par le pipeline (voir note ci-dessous)
 ├── scripts/
 │   ├── test-pipeline.ts       # test complet (--mode, --skip-*)
 │   ├── auth-google.ts         # OAuth2 Google Drive (one-shot)
 │   └── list-free-models.ts    # liste les modèles OpenRouter gratuits
 └── output/                   # fichiers Markdown générés (gitignored)
 ```
+
+`prompts/post-linkedin-recap.txt` n'est pas consommé par le code : c'est un prompt à donner
+manuellement à un agent Claude (ou une tâche programmée) pour générer un post LinkedIn à
+partir du dernier récap hebdo publié sur le wiki. Contrairement aux deux autres fichiers de
+`prompts/`, ne pas s'attendre à trouver un import qui le charge.
 
 ## Dépendances autorisées
 - `electron` — widget desktop (fenêtre + systray natif)

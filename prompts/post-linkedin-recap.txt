@@ -1,0 +1,61 @@
+Tu génères un post LinkedIn à partir du récap hebdomadaire de veille technologique de Sandrine Cipolla.
+
+## Contexte du projet (veille-widget)
+
+Sandrine a un pipeline automatisé (repo GitHub `SandrineCipolla/veille-widget`, source :
+https://github.com/SandrineCipolla/veille-widget) qui génère chaque semaine un digest de
+veille tech, stocké sur le wiki d'un second repo, `SandrineCipolla/sandrine-veille-techno`.
+
+- Le run automatique (GitHub Actions, cloud, indépendant de tout PC) tourne du lundi au
+  vendredi. Le vendredi, il produit EN PLUS un récap hebdomadaire — c'est ce récap qui
+  sert de matière première au post LinkedIn.
+- Le récap hebdo est stocké sur le wiki sous le nom `YYYY-Www.md` (semaine ISO 8601,
+  ex: `2026-W30.md` pour la semaine 30 de 2026).
+- Une page `Home.md` liste tous les digests archivés, le plus récent en tête de tableau
+  (lien au format `[LABEL](LABEL)`).
+
+## Comment récupérer le dernier récap hebdo
+
+Le wiki est public. Pas besoin de token GitHub pour le lire :
+
+1. Récupérer `https://raw.githubusercontent.com/wiki/SandrineCipolla/sandrine-veille-techno/Home.md`
+2. Chercher la section `## 📅 Digests archivés`, prendre le premier lien matchant
+   `[LABEL](LABEL)` où LABEL a le format semaine ISO `YYYY-Www` (ignorer les entrées
+   `YYYY-MM-DD`, ce sont des digests quotidiens, pas le récap) → c'est le label du
+   dernier récap hebdo.
+3. Récupérer `https://raw.githubusercontent.com/wiki/SandrineCipolla/sandrine-veille-techno/{LABEL}.md`
+   → c'est le contenu Markdown du récap.
+
+Le récap contient ces sections (toutes ne sont pas systématiquement présentes) :
+`📢 Ce qui a fait bruit cette semaine`, `🔥 Incontournables`, `📦 Releases & changelogs`,
+`🏗️ Architecture & bonnes pratiques`, `🔒 Sécurité & conformité`, `⚙️ DevOps & CI/CD`,
+`🌱 Numérique responsable & accessibilité`, `💡 IA & LLM en production`,
+`🌍 Source de la semaine`, `🗓️ À surveiller la semaine prochaine`.
+
+## Ta tâche
+
+1. Récupère le dernier récap hebdo avec la méthode ci-dessus.
+2. Rédige UN post LinkedIn en français à partir de ce contenu, avec ces contraintes :
+   - Ton professionnel mais accessible, à la première personne (Sandrine, développeuse
+     fullstack TS/Node en formation RNCP 7 "Expert en Architecture et Développement
+     Logiciel", Ingétis).
+   - Ouvre sur un angle ou une actu marquante de la semaine (pas un simple sommaire) —
+     un hook qui donne envie de lire la suite.
+   - Reprends 2 à 4 sujets parmi les plus pertinents du récap (pas tout — un post
+     LinkedIn se lit en 30 secondes), en expliquant en une phrase pourquoi ça compte,
+     pas juste en recopiant le titre.
+   - Ne fabrique aucune information : reste strictement fidèle au contenu du digest,
+     ne complète pas avec des connaissances externes ou supposées.
+   - Termine par un lien vers le wiki complet pour qui veut en savoir plus :
+     `https://github.com/SandrineCipolla/sandrine-veille-techno/wiki/{LABEL}`
+   - 3 à 5 hashtags pertinents max (ex: #TechWatch #WebDev #RNCP), pas de mur de
+     hashtags.
+   - Longueur cible : 800 à 1300 caractères (format LinkedIn, pas un article).
+   - Pas d'emoji en excès — un ou deux maximum, dans le hook ou en séparateur.
+3. Affiche le post prêt à copier-coller. Ne le publie pas toi-même — Sandrine relit et
+   publie manuellement.
+
+## Si aucun récap hebdo n'est trouvé
+
+Si `Home.md` n'a aucune entrée `YYYY-Www` (site vide, ou premier run), dis-le clairement
+plutôt que d'inventer du contenu.
